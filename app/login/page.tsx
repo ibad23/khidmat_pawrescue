@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
 import { ForgotPasswordDialog } from "@/components/dialogs/ForgotPasswordDialog";
+import useAuth from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,10 +17,32 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
+  const { signIn, user } = useAuth();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/dashboard");
+    // call supabase sign in
+    (async () => {
+      try {
+        const res = await signIn(email, password);
+        if (res?.error) {
+          toast({ title: "Login failed", description: res.error.message });
+          return;
+        }
+        router.replace("/dashboard");
+      } catch (err: any) {
+        toast({ title: "Login error", description: err?.message ?? String(err) });
+      }
+    })();
   };
+
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // if already authenticated, redirect to dashboard
+    if (user) {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
 
   return (
     <>
