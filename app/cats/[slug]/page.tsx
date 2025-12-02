@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { useParams } from "next/navigation";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +23,33 @@ const treatmentsData = [
 ];
 
 export default function CatDetailPage() {
+  const params = useParams();
+  const slugRaw = params?.slug;
+  const slugParam = Array.isArray(slugRaw) ? slugRaw[0] : (slugRaw ?? "");
   const [showAddTreatmentDialog, setShowAddTreatmentDialog] = useState(false);
+  const [treatments, setTreatments] = useState<any[]>([]);
+
+  const loadTreatments = useCallback(async () => {
+    if (!slugParam) return;
+    try {
+      // Turn slug like 'PA-0001' into digits (e.g., 1)
+      const digitsMatch = String(slugParam).match(/\d+/);
+      const catIdNum = digitsMatch ? Number(digitsMatch[0]) : undefined;
+      if (!catIdNum) return;
+      const res = await axios.get(`/api/treatments/read?cat_id=${catIdNum}`);
+      const rows = res.data?.data || [];
+      const mapped = rows.map((r: any) => ({
+        id: r.treatment_id,
+        date: r.date_time ? new Date(r.date_time).toLocaleString() : "",
+        temp: r.temperature || "",
+        treatment: r.treatment || "",
+        givenBy: r.users?.user_name || (r.user_id ? `User ${r.user_id}` : ""),
+      }));
+      setTreatments(mapped);
+    } catch (err) {
+      console.error("Failed to load treatments for cat:", err);
+    }
+  }, [slugParam]);
 
   return (
     <DashboardLayout>
@@ -82,8 +110,8 @@ export default function CatDetailPage() {
                         <th className="text-left py-3 px-4 text-muted-foreground font-medium">Given By</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {treatmentsData.map((treatment, index) => (
+                            <tbody>
+                              {treatments.map((treatment, index) => (
                         <tr key={index} className="border-b border-border">
                           <td className="py-3 px-4 text-foreground text-sm">{treatment.date}</td>
                           <td className="py-3 px-4 text-foreground text-sm">{treatment.temp}</td>
@@ -128,7 +156,16 @@ export default function CatDetailPage() {
         </Card>
       </div>
 
-      <AddTreatmentDialog open={showAddTreatmentDialog} onOpenChange={setShowAddTreatmentDialog} />
+      <AddTreatmentDialog
+        open={showAddTreatmentDialog}
+        onOpenChange={setShowAddTreatmentDialog}
+        // convert slugParam 'PA-0001' to numeric '1' if present
+        initialCatId={(() => {
+          const digits = String(slugParam).match(/\d+/);
+          return digits ? digits[0] : undefined;
+        })()}
+        onAdd={() => loadTreatments()}
+      />
     </DashboardLayout>
   );
 }

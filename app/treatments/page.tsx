@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,38 @@ export default function TreatmentsPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [catFilter, setCatFilter] = useState("");
 
+  const loadTreatments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get('/api/treatments/read');
+      const rows = res.data?.data || [];
+      const mapped = rows.map((r: any) => ({
+        id: r.treatment_id,
+        catId: r.cat_id ? `PA-${String(r.cat_id).padStart(3, '0')}` : "",
+        catIdNum: r.cat_id,
+        catName: r.cats?.cat_name || "",
+        cageNo: r.cats?.cage?.cage_no || r.cats?.cage_no || "",
+        temp: r.temperature || "",
+        treatment: r.treatment || "",
+        time: r.date_time ? new Date(r.date_time).toLocaleString() : "",
+        givenBy: r.users?.user_name || (r.user_id ? `User ${r.user_id}` : "")
+      }));
+      setTreatments(mapped);
+      try {
+        sessionStorage.setItem('treatments:all', JSON.stringify(mapped));
+      } catch (e) {
+        // ignore storage errors
+      }
+    } catch (err) {
+      console.error('Failed to load treatments', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleAddTreatment = (newTreatment: any) => {
-    setTreatments([...treatments, newTreatment]);
+    // reload the table from server so it always shows authoritative data
+    loadTreatments();
   };
 
   const handleEditTreatment = (treatment: any) => {
@@ -45,7 +75,8 @@ export default function TreatmentsPage() {
   };
 
   const handleEditSubmit = (updatedTreatment: any) => {
-    setTreatments(treatments.map(t => (t === selectedTreatment ? updatedTreatment : t)));
+    // reload from server after update so table reflects authoritative data
+    loadTreatments();
   };
 
   const handleDeleteTreatment = (treatment: any) => {
@@ -53,9 +84,19 @@ export default function TreatmentsPage() {
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
-    setTreatments(treatments.filter(t => t !== selectedTreatment));
-    setSelectedTreatment(null);
+  const confirmDelete = async () => {
+    try {
+      const resp = await axios.delete('/api/treatments/delete', {
+        data: { treatment_id: selectedTreatment.id }
+      });
+      if (resp.status === 200) {
+        loadTreatments();
+        setShowDeleteDialog(false);
+        setSelectedTreatment(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete treatment', err);
+    }
   };
 
   const filteredTreatments = treatments.filter((treatment) => {
@@ -86,36 +127,8 @@ export default function TreatmentsPage() {
       }
     }
 
-    setLoading(true);
-    axios
-      .get("/api/treatments/read")
-      .then((res) => {
-        if (!mounted) return;
-        const rows = res.data?.data || [];
-        const mapped = rows.map((r: any) => ({
-          catId: r.cat_id ? String(r.cat_id) : "",
-          catName: r.cats?.cat_name || "",
-          cageNo: r.cats?.cage?.cage_no || r.cats?.cage_no || "",
-          temp: r.temperature || "",
-          treatment: r.treatment || "",
-          time: r.date_time ? new Date(r.date_time).toLocaleString() : "",
-          givenBy: r.users?.user_name || (r.user_id ? `User ${r.user_id}` : "")
-        }));
-        if (mounted) {
-          setTreatments(mapped);
-          try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(mapped));
-          } catch (e) {
-            // ignore storage errors
-          }
-        }
-      })
-      .catch((err) => {
-        if (mounted) console.error("Failed to load treatments:", err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
+    // If no cached payload is found, call the loader to fetch from the API
+    loadTreatments();
 
     return () => {
       mounted = false;
@@ -166,11 +179,11 @@ export default function TreatmentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Cats</SelectItem>
-                <SelectItem value="PA-0001">PA-0001</SelectItem>
-                <SelectItem value="PA-0003">PA-0003</SelectItem>
-                <SelectItem value="PA-0004">PA-0004</SelectItem>
-                <SelectItem value="PA-0005">PA-0005</SelectItem>
-                <SelectItem value="PA-0006">PA-0006</SelectItem>
+                <SelectItem value="1">PA-0001</SelectItem>
+                <SelectItem value="3">PA-0003</SelectItem>
+                <SelectItem value="4">PA-0004</SelectItem>
+                <SelectItem value="5">PA-0005</SelectItem>
+                <SelectItem value="6">PA-0006</SelectItem>
               </SelectContent>
             </Select>
 

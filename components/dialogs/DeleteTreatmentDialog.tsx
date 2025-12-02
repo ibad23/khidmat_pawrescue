@@ -2,7 +2,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { toast } from "sonner";
 
 interface DeleteTreatmentDialogProps {
@@ -21,12 +20,6 @@ export const DeleteTreatmentDialog = ({ open, onOpenChange, onConfirm }: DeleteT
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-md">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-5 w-5" />
-        </button>
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Delete Treatment</DialogTitle>
         </DialogHeader>

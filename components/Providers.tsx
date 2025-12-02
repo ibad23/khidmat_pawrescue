@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   // Force a deterministic default theme on the server to avoid hydration mismatches
@@ -9,6 +10,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       {children}
+      {/* Sonner Toaster for global toast notifications */}
+      <Toaster position="top-right" richColors />
     </ThemeProvider>
   );
 }
