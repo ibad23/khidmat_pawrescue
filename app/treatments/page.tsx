@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,17 +23,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const treatmentsData = [
-  { catId: "PA-0001", catName: "Renal", cageNo: "GW-C01", temp: "100 F", treatment: "Treatment will go here", time: "8:00 am", givenBy: "Dr Sajdeen" },
-  { catId: "PA-0001", catName: "Renal", cageNo: "GW-C01", temp: "100 F", treatment: "Treatment will go here", time: "10:00 pm", givenBy: "Dr Sajdeen" },
-  { catId: "PA-0003", catName: "Sam", cageNo: "GW-C03", temp: "100 F", treatment: "Treatment will go here", time: "8:00 am", givenBy: "Dr Sajdeen" },
-  { catId: "PA-0004", catName: "Wobbly", cageNo: "GW-C04", temp: "100 F", treatment: "Treatment will go here", time: "10:00 pm", givenBy: "Dr Sajdeen" },
-  { catId: "PA-0005", catName: "Sonia", cageNo: "ICU-C01", temp: "100 F", treatment: "Treatment will go here", time: "8:00 am", givenBy: "Dr Sajdeen" },
-  { catId: "PA-0006", catName: "Shah Sahab", cageNo: "GW-C05", temp: "100 F", treatment: "Treatment will go here", time: "10:00 pm", givenBy: "Dr Sajdeen" },
-];
+const treatmentsData: any[] = [];
 
 export default function TreatmentsPage() {
-  const [treatments, setTreatments] = useState(treatmentsData);
+  const [treatments, setTreatments] = useState<any[]>(treatmentsData);
+  const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -72,6 +67,60 @@ export default function TreatmentsPage() {
     setDateFilter("");
     setCatFilter("");
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const cacheKey = `treatments:all`;
+    const cached = typeof window !== "undefined" ? sessionStorage.getItem(cacheKey) : null;
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (mounted) {
+          setTreatments(parsed);
+          setLoading(false);
+        }
+        return;
+      } catch (e) {
+        // failed parse, continue to fetch
+      }
+    }
+
+    setLoading(true);
+    axios
+      .get("/api/treatments/read")
+      .then((res) => {
+        if (!mounted) return;
+        const rows = res.data?.data || [];
+        const mapped = rows.map((r: any) => ({
+          catId: r.cat_id ? String(r.cat_id) : "",
+          catName: r.cats?.cat_name || "",
+          cageNo: r.cats?.cage?.cage_no || r.cats?.cage_no || "",
+          temp: r.temperature || "",
+          treatment: r.treatment || "",
+          time: r.date_time ? new Date(r.date_time).toLocaleString() : "",
+          givenBy: r.users?.user_name || (r.user_id ? `User ${r.user_id}` : "")
+        }));
+        if (mounted) {
+          setTreatments(mapped);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(mapped));
+          } catch (e) {
+            // ignore storage errors
+          }
+        }
+      })
+      .catch((err) => {
+        if (mounted) console.error("Failed to load treatments:", err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <DashboardLayout>

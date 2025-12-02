@@ -7,6 +7,7 @@ export async function POST(req: Request) {
     const email = String(body?.email ?? "").trim();
     if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
 
+    // query
     const resp = await client
       .from("users")
       .select(("user_name, internal_role_id") as any)
