@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Minus, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import axios from "axios";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
@@ -38,20 +39,17 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
     const fetchCats = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/cats/read");
-        const json = await res.json();
-        if (res.ok) {
-          setCats(json.data || []);
-          // If initialCatId provided, set cat details
-          if (initialCatId) {
-            const initId = String(initialCatId).match(/\d+/);
-            const numId = initId ? Number(initId[0]) : undefined;
-            if (numId) {
-              const found = json.data?.find((c: any) => c.cat_id === numId);
-              if (found) {
-                setCatId(String(found.cat_id));
-                setCatName(found.cat_name);
-              }
+        const res = await axios.get('/api/cats/read');
+        setCats(res.data.data || []);
+        // If initialCatId provided, set cat details
+        if (initialCatId) {
+          const initId = String(initialCatId).match(/\d+/);
+          const numId = initId ? Number(initId[0]) : undefined;
+          if (numId) {
+            const found = res.data.data?.find((c: any) => c.cat_id === numId);
+            if (found) {
+              setCatId(String(found.cat_id));
+              setCatName(found.cat_name);
             }
           }
         }
@@ -85,21 +83,18 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
       // Temporary: set a default user id to associate this treatment with an existing user in DB
       const defaultUserId = 1;
 
-      const resp = await fetch("/api/treatments/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cat_id: catIdNum,
-          user_id: defaultUserId,
-          // user_id: you can include the current user id here if available
-          date_time: dateTimeISO,
-          temperature: `${temp}°F`,
-          treatment: details,
-        }),
+      // do it with axios to leverage its error handling
+      const resp = await axios.post("/api/treatments/create", {
+        cat_id: catIdNum,
+        user_id: defaultUserId,
+        // user_id: you can include the current user id here if available
+        date_time: dateTimeISO,
+        temperature: `${temp}°F`,
+        treatment: details,
       });
-
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || "Failed to add treatment");
+      
+      const json = resp.data;
+      if (resp.status !== 200) throw new Error(json?.error || "Failed to add treatment");
 
       // Map returned data to what the UI expects and pass to the onAdd callback if provided
       const inserted = json.data;

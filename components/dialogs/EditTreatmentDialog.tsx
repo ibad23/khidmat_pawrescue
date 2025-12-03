@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
+import axios from "axios";
 
 interface EditTreatmentDialogProps {
   open: boolean;
@@ -42,11 +43,8 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
     const fetchCats = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/cats/read");
-        const json = await res.json();
-        if (res.ok) {
-          setCats(json.data || []);
-        }
+        const res = await axios.get('/api/cats/read');
+        setCats(res.data.data || []);
       } catch (err) {
         console.error('Failed to fetch cats', err);
       } finally {
@@ -89,14 +87,10 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
         treatment: formData.treatment,
       };
 
-      // Send PATCH request to update the treatment
-      const resp = await fetch('/api/treatments/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json?.error || 'Failed to update treatment');
+      // send PATCH request with axios to leverage its error handling
+      const resp = await axios.patch('/api/treatments/update', payload);
+      const json = resp.data;
+      if (resp.status !== 200) throw new Error(json?.error || 'Failed to update treatment');
 
       // Map updated data back to the UI format
       const updated = json.data;

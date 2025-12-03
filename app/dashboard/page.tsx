@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 const DashboardPage = () => {
   const [dateFilter, setDateFilter] = useState<string>("Till Date");
@@ -18,11 +19,10 @@ const DashboardPage = () => {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/dashboard/read?dateFilter=${dateFilter}`);
-        const json = await res.json();
-        if (res.ok) {
-          setDashboardData(json);
-        }
+        const res = await axios.get('/api/dashboard/read', {
+          params: { dateFilter }
+        });
+        setDashboardData(res.data);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
