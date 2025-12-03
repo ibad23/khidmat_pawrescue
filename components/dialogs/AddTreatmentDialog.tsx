@@ -94,7 +94,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
       });
       
       const json = resp.data;
-      if (resp.status !== 200) throw new Error(json?.error || "Failed to add treatment");
+      if (resp.status !== 201) throw new Error(json?.error || "Failed to add treatment");
 
       // Map returned data to what the UI expects and pass to the onAdd callback if provided
       const inserted = json.data;
