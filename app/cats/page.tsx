@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,15 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 
-const catsData = [
-  { id: "PA-0001", name: "Renal", owner: "Mrs Hania", contact: "0321784020", date: "14 Feb 2019", type: "Pet", cage: "-", status: "Moved To Healthy", color: "success" },
-  { id: "PA-0002", name: "Hungry", owner: "Noman", contact: "0321784020", date: "14 Feb 2019", type: "Rescue", cage: "-", status: "Expired", color: "danger" },
-  { id: "PA-0003", name: "Sam", owner: "Sohaib", contact: "0321784020", date: "14 Feb 2019", type: "Rescue", cage: "GW-C03", status: "Under Treatment", color: "info" },
-  { id: "PA-0004", name: "Wobbly", owner: "ASP Police", contact: "0321784020", date: "14 Feb 2019", type: "Pet", cage: "-", status: "Adopted", color: "warning" },
-  { id: "PA-0005", name: "Sonia", owner: "Saba", contact: "0321784020", date: "14 Feb 2019", type: "Pet", cage: "-", status: "Discharged", color: "purple" },
-  { id: "PA-0006", name: "Shah Sahab", owner: "Nisma", contact: "0321784020", date: "14 Feb 2019", type: "Rescue", cage: "-", status: "Fostered", color: "purple" },
-];
-
 const statusColors = {
   success: "bg-status-success/20 text-status-success",
   danger: "bg-status-danger/20 text-status-danger",
@@ -39,16 +31,52 @@ const statusColors = {
   purple: "bg-status-purple/20 text-status-purple",
 };
 
+function mapStatusToColor(status?: string) {
+  if (!status) return "purple";
+  const s = status.toLowerCase();
+  if (s.includes("expired")) return "danger";
+  if (s.includes("under treatment") || s.includes("under treatment")) return "info";
+  if (s.includes("move") || s.includes("healthy")) return "success";
+  if (s.includes("adopt")) return "warning";
+  if (s.includes("discharge") || s.includes("foster")) return "purple";
+  return "purple";
+}
+
 export default function CatsPage() {
   const router = useRouter();
-  const [cats, setCats] = useState(catsData);
+  const [cats, setCats] = useState<any[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCat, setSelectedCat] = useState<any>(null);
   const [dateFilter, setDateFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [ownerFilter, setOwnerFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await axios.get("/api/cats/read");
+        const rows = res.data?.data || [];
+        const mapped = rows.map((r: any) => ({
+          id: `PA-${String(r.cat_id).padStart(4, "0")}`,
+          name: r.cat_name || "",
+          owner: r.externals?.name || "",
+          contact: r.externals?.contact_num || "",
+          date: r.admitted_on ? new Date(r.admitted_on).toLocaleDateString() : "",
+          admitted_on_raw: r.admitted_on || null,
+          type: r.type || "",
+          cage: r.cage?.cage_no ? `GW-C${r.cage.cage_no}` : "-",
+          status: r.status || "",
+          color: mapStatusToColor(r.status),
+        }));
+        setCats(mapped);
+      } catch (err) {
+        console.error("Failed to load cats", err);
+      }
+    };
+    load();
+  }, []);
 
   const handleAddCat = (newCat: any) => {
     setCats([...cats, newCat]);
@@ -71,8 +99,43 @@ export default function CatsPage() {
     setSelectedCat(null);
   };
 
+  const statusOptions = useMemo(() => {
+    const s = new Set<string>();
+    cats.forEach((c) => { if (c.status) s.add(c.status); });
+    return Array.from(s);
+  }, [cats]);
+
+  const ownerOptions = useMemo(() => {
+    const s = new Set<string>();
+    cats.forEach((c) => { if (c.owner) s.add(c.owner); });
+    return Array.from(s);
+  }, [cats]);
+
   const filteredCats = cats.filter((cat) => {
+    // Status filter
     if (statusFilter && statusFilter !== "all" && cat.status !== statusFilter) return false;
+
+    // Owner filter
+    if (ownerFilter && ownerFilter !== "all" && cat.owner !== ownerFilter) return false;
+
+    // Date filter: compare admitted_on_raw
+    if (dateFilter) {
+      const raw = cat.admitted_on_raw;
+      if (!raw) return false;
+      const admitted = new Date(raw);
+      const now = new Date();
+
+      if (dateFilter === "today") {
+        if (!(now.getFullYear() === admitted.getFullYear() && now.getMonth() === admitted.getMonth() && now.getDate() === admitted.getDate())) return false;
+      } else if (dateFilter === "week") {
+        const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays > 7) return false;
+      } else if (dateFilter === "month") {
+        const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
+        if (diffDays > 30) return false;
+      }
+    }
+
     return true;
   });
 
@@ -111,7 +174,7 @@ export default function CatsPage() {
 
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="14 Feb 2019" />
+                <SelectValue placeholder="Date" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="today">Today</SelectItem>
@@ -126,12 +189,9 @@ export default function CatsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Under Treatment">Under Treatment</SelectItem>
-                <SelectItem value="Moved To Healthy">Moved To Healthy</SelectItem>
-                <SelectItem value="Expired">Expired</SelectItem>
-                <SelectItem value="Adopted">Adopted</SelectItem>
-                <SelectItem value="Discharged">Discharged</SelectItem>
-                <SelectItem value="Fostered">Fostered</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -141,6 +201,9 @@ export default function CatsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Owners</SelectItem>
+                {ownerOptions.map((o) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 

@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { toast } from "sonner";
 
 interface AddCatDialogProps {
@@ -22,41 +23,84 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     age: "",
     gender: "",
     type: "",
-    cageNo: "",
+    cageId: "",
     status: "",
     ownerName: "",
     contactNo: "",
     address: "",
   });
 
+  const [cageOptions, setCageOptions] = useState<any[]>([]);
+  const [statusOptions, setStatusOptions] = useState<string[]>([]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newCat = {
-      id: `PA-${String(Date.now()).slice(-4)}`,
-      name: formData.catName,
-      age: formData.age,
-      gender: formData.gender,
-      type: formData.type,
-      cage: formData.cageNo,
-      status: formData.status,
-      owner: formData.ownerName,
-      contact: formData.contactNo,
-    };
-    onAdd?.(newCat);
-    toast.success("Cat added successfully");
-    onOpenChange(false);
-    setFormData({
-      catName: "",
-      age: "",
-      gender: "",
-      type: "",
-      cageNo: "",
-      status: "",
-      ownerName: "",
-      contactNo: "",
-      address: "",
-    });
+    (async () => {
+      try {
+        const payload: any = {
+          cat_name: formData.catName,
+          age: formData.age ? Number(formData.age) : null,
+          gender: formData.gender || null,
+          type: formData.type || null,
+          cage_id: formData.cageId ? Number(formData.cageId) : null,
+          status: formData.status || null,
+          owner_name: formData.ownerName || null,
+          contact_num: formData.contactNo || null,
+          address: formData.address || null,
+        };
+
+        const res = await axios.post("/api/cats/create", payload);
+        const created = res.data?.data;
+        if (!created) throw new Error(res.data?.error || "Create failed");
+
+        const mapped = {
+          id: `PA-${String(created.cat_id).padStart(4, "0")}`,
+          name: created.cat_name,
+          owner: created.externals?.name || "",
+          contact: created.externals?.contact_num || "",
+          date: created.admitted_on ? new Date(created.admitted_on).toLocaleDateString() : "",
+          type: created.type || "",
+          cage: created.cage?.cage_no ? `GW-C${created.cage.cage_no}` : "-",
+          status: created.status || "",
+          color: "purple",
+        };
+
+        onAdd?.(mapped);
+        toast.success("Cat added successfully");
+        onOpenChange(false);
+        setFormData({
+          catName: "",
+          age: "",
+          gender: "",
+          type: "",
+          cageId: "",
+          status: "",
+          ownerName: "",
+          contactNo: "",
+          address: "",
+        });
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err?.message || "Failed to add cat");
+      }
+    })();
   };
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const [cageRes, statusRes] = await Promise.all([
+          axios.get("/api/cages/free"),
+          axios.get("/api/cats/statuses"),
+        ]);
+        setCageOptions(cageRes.data?.data || []);
+        setStatusOptions(statusRes.data?.data || []);
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    };
+    loadOptions();
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,17 +139,14 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Age</Label>
-              <Select value={formData.age} onValueChange={(value) => setFormData({ ...formData, age: value })}>
-                <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Please Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0-1">0-1 yrs</SelectItem>
-                  <SelectItem value="1-2">1-2 yrs</SelectItem>
-                  <SelectItem value="2-3">2-3 yrs</SelectItem>
-                  <SelectItem value="3+">3+ yrs</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                type="number"
+                placeholder="Age in years"
+                className="bg-muted border-border"
+                required
+                value={formData.age}
+                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
@@ -114,8 +155,8 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                   <SelectValue placeholder="Please Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -129,22 +170,22 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                   <SelectValue placeholder="Please Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rescued">Rescued</SelectItem>
-                  <SelectItem value="stray">Stray</SelectItem>
-                  <SelectItem value="owned">Owned</SelectItem>
+                  <SelectItem value="Pet">Pet</SelectItem>
+                  <SelectItem value="Rescued">Rescued</SelectItem>
+                  <SelectItem value="Stray">Stray</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Cage No.</Label>
-              <Select value={formData.cageNo} onValueChange={(value) => setFormData({ ...formData, cageNo: value })}>
+              <Select value={formData.cageId} onValueChange={(value) => setFormData({ ...formData, cageId: value })}>
                 <SelectTrigger className="bg-muted border-border">
                   <SelectValue placeholder="Please Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="GW-C01">GW-C01</SelectItem>
-                  <SelectItem value="GW-C02">GW-C02</SelectItem>
-                  <SelectItem value="ICU-C01">ICU-C01</SelectItem>
+                  {cageOptions.map((c) => (
+                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{`GW-C${c.cage_no}`}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -157,9 +198,9 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                 <SelectValue placeholder="Please Select" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="under-treatment">Under Treatment</SelectItem>
-                <SelectItem value="recovered">Recovered</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
