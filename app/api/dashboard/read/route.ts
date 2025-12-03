@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+import client from "@/app/api/client";
 import { NextRequest, NextResponse } from "next/server";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get total cats and status breakdown
-    let catsQuery = supabase
+    let catsQuery = client
       .from("cats")
       .select("cat_id, status", { count: "exact" });
 
@@ -56,7 +51,7 @@ export async function GET(req: NextRequest) {
     ].filter(item => item.value > 0);
 
     // Get donations data by month
-    let donationsQuery = supabase
+    let donationsQuery = client
       .from("donations")
       .select("date, amount");
 
@@ -81,7 +76,7 @@ export async function GET(req: NextRequest) {
     }));
 
     // Get top owners (external_role_id = 1)
-    let ownersQuery = supabase
+    let ownersQuery = client
       .from("cats")
       .select("external_id, externals(name, external_role_id)")
       .not("external_id", "is", null);
