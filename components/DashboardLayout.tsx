@@ -4,10 +4,9 @@ import { ReactNode, useEffect, useState } from "react";
 import useAuth from "@/hooks/useAuth";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ChevronLeft, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DashboardLayoutProps {
@@ -16,24 +15,11 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const router = useRouter();
-  const [showBack, setShowBack] = useState(true);
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name?: string | null; role?: string | null } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
 
-    try {
-      const ref = document.referrer || "";
-      // Hide back button if user likely came from login or there's no prior history
-      if (ref.includes("/login") || window.history.length <= 2) {
-        setShowBack(false);
-      }
-    } catch (err) {
-      // ignore
-    }
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -105,19 +91,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="flex-1 flex flex-col w-full">
           <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
             <div className="flex h-16 items-center gap-4 px-6">
-              <SidebarTrigger className="-ml-2" />
-              
-              {showBack && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.back()}
-                  className="text-muted-foreground hover:text-foreground gap-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back
-                </Button>
-              )}
 
               <div className="flex-1" />
 

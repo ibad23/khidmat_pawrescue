@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import { formatCatId, formatCageNo } from "@/lib/utils";
 
 interface AddCatDialogProps {
   open: boolean;
@@ -54,13 +55,13 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
         if (!created) throw new Error(res.data?.error || "Create failed");
 
         const mapped = {
-          id: `PA-${String(created.cat_id).padStart(4, "0")}`,
+          id: formatCatId(created.cat_id),
           name: created.cat_name,
           owner: created.externals?.name || "",
           contact: created.externals?.contact_num || "",
           date: created.admitted_on ? new Date(created.admitted_on).toLocaleDateString() : "",
           type: created.type || "",
-          cage: created.cage?.cage_no ? `GW-C${created.cage.cage_no}` : "-",
+          cage: created.cage?.cage_no ? formatCageNo(created.cage.cage_no) : "-",
           status: created.status || "",
           color: "purple",
         };
@@ -184,7 +185,7 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                 </SelectTrigger>
                 <SelectContent>
                   {cageOptions.map((c) => (
-                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{`GW-C${c.cage_no}`}</SelectItem>
+                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{formatCageNo(c.cage_no)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

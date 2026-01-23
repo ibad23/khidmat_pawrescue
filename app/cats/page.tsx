@@ -21,34 +21,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-
-const statusColors = {
-  success: "bg-status-success/20 text-status-success",
-  danger: "bg-status-danger/20 text-status-danger",
-  info: "bg-status-info/20 text-status-info",
-  warning: "bg-status-warning/20 text-status-warning",
-  purple: "bg-status-purple/20 text-status-purple",
-};
-
-function mapStatusToColor(status?: string) {
-  if (!status) return "purple";
-  const s = status.toLowerCase();
-  if (s.includes("expired")) return "danger";
-  if (s.includes("under treatment") || s.includes("under treatment")) return "info";
-  if (s.includes("move") || s.includes("healthy")) return "success";
-  if (s.includes("adopt")) return "warning";
-  if (s.includes("discharge") || s.includes("foster")) return "purple";
-  return "purple";
-}
+import { formatCatId, formatCageNo, mapStatusToColor } from "@/lib/utils";
+import { STATUS_COLORS, Cat } from "@/lib/types";
 
 export default function CatsPage() {
   const router = useRouter();
-  const [cats, setCats] = useState<any[]>([]);
+  const [cats, setCats] = useState<Cat[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedCat, setSelectedCat] = useState<any>(null);
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
@@ -56,47 +38,35 @@ export default function CatsPage() {
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         const res = await axios.get("/api/cats/read");
         const rows = res.data?.data || [];
-        const mapped = rows.map((r: any) => ({
-          id: `PA-${String(r.cat_id).padStart(4, "0")}`,
+        const mapped: Cat[] = rows.map((r: any) => ({
+          id: formatCatId(r.cat_id),
+          cat_id: r.cat_id,
           name: r.cat_name || "",
           owner: r.externals?.name || "",
           contact: r.externals?.contact_num || "",
           date: r.admitted_on ? new Date(r.admitted_on).toLocaleDateString() : "",
           admitted_on_raw: r.admitted_on || null,
           type: r.type || "",
-          cage: r.cage?.cage_no ? `GW-C${r.cage.cage_no}` : "-",
+          cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no) : "-",
           status: r.status || "",
           color: mapStatusToColor(r.status),
         }));
         setCats(mapped);
       } catch (err) {
         console.error("Failed to load cats", err);
+      } finally {
+        setLoading(false);
       }
     };
     load();
   }, []);
 
-  const handleAddCat = (newCat: any) => {
-    setCats([...cats, newCat]);
-  };
-
-  const handleEditCat = (e: React.MouseEvent, cat: any) => {
-    e.stopPropagation();
-    setSelectedCat(cat);
-    setShowEditDialog(true);
-  };
-
-  const handleDeleteCat = (e: React.MouseEvent, cat: any) => {
-    e.stopPropagation();
-    setSelectedCat(cat);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = () => {
-    setCats(cats.filter((c) => c.id !== selectedCat.id));
-    setSelectedCat(null);
+  const handleAddCat = () => {
+    // Reload the list after adding
+    window.location.reload();
   };
 
   const statusOptions = useMemo(() => {
@@ -112,13 +82,9 @@ export default function CatsPage() {
   }, [cats]);
 
   const filteredCats = cats.filter((cat) => {
-    // Status filter
     if (statusFilter && statusFilter !== "all" && cat.status !== statusFilter) return false;
-
-    // Owner filter
     if (ownerFilter && ownerFilter !== "all" && cat.owner !== ownerFilter) return false;
 
-    // Date filter: compare admitted_on_raw
     if (dateFilter) {
       const raw = cat.admitted_on_raw;
       if (!raw) return false;
@@ -141,8 +107,8 @@ export default function CatsPage() {
 
   const handleResetFilter = () => {
     setDateFilter("");
-    setStatusFilter("");
-    setOwnerFilter("");
+    setStatusFilter("all");
+    setOwnerFilter("all");
   };
 
   return (
@@ -234,37 +200,53 @@ export default function CatsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredCats.map((cat) => (
-                <tr
-                  key={cat.id}
-                  className="border-b border-border hover:bg-card/50 cursor-pointer"
-                  onClick={() => router.push(`/cats/${cat.id}`)}
-                >
-                  <td className="py-4 px-4 text-foreground">{cat.id}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.name}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.owner}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.contact}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.date}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.type}</td>
-                  <td className="py-4 px-4 text-foreground">{cat.cage}</td>
-                  <td className="py-4 px-4">
-                    <Badge className={(statusColors as any)[cat.color]}>{cat.status}</Badge>
-                  </td>
-                  <td className="py-4 px-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e: any) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                [...Array(6)].map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-28" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-24" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-20" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-4 w-16" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-24 rounded-full" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-8 rounded" /></td>
+                  </tr>
+                ))
+              ) : (
+                filteredCats.map((cat) => (
+                  <tr
+                    key={cat.id}
+                    className="border-b border-border hover:bg-card/50 cursor-pointer"
+                    onClick={() => router.push(`/cats/${cat.id}`)}
+                  >
+                    <td className="py-4 px-4 text-foreground">{cat.id}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.name}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.owner}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.contact}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.date}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.type}</td>
+                    <td className="py-4 px-4 text-foreground">{cat.cage}</td>
+                    <td className="py-4 px-4">
+                      <Badge className={STATUS_COLORS[cat.color]}>{cat.status}</Badge>
+                    </td>
+                    <td className="py-4 px-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

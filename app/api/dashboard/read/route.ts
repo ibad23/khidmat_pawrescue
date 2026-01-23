@@ -78,7 +78,8 @@ export async function GET(req: NextRequest) {
     // Get top owners (external_role_id = 1)
     let ownersQuery = client
       .from("cats")
-      .select("external_id, externals(name, external_role_id)")
+      // include contact_num from externals so we can show reporter contact
+      .select("external_id, externals(name, external_role_id, contact_num)")
       .not("external_id", "is", null);
 
     if (startDate) {
@@ -88,15 +89,19 @@ export async function GET(req: NextRequest) {
     const { data: ownersData } = await ownersQuery;
 
     const ownerCounts: Record<string, number> = {};
+    const ownerContacts: Record<string, string | null> = {};
     ownersData?.forEach((cat: any) => {
       if (cat.externals?.external_role_id === 1) {
         const name = cat.externals?.name || "Unknown";
+        const contact = cat.externals?.contact_num ?? null;
         ownerCounts[name] = (ownerCounts[name] || 0) + 1;
+        // keep first-seen contact for that name
+        if (!ownerContacts[name]) ownerContacts[name] = contact;
       }
     });
 
     const topReporters = Object.entries(ownerCounts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({ name, count, contact: ownerContacts[name] ?? null }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 

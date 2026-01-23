@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const treatmentsData = [
   { date: "14 Feb 2019 10:00 am", temp: "101", treatment: "Treatment details will go here", givenBy: "Dr Sajdeen" },
@@ -28,10 +29,12 @@ export default function CatDetailPage() {
   const slugParam = Array.isArray(slugRaw) ? slugRaw[0] : (slugRaw ?? "");
   const [showAddTreatmentDialog, setShowAddTreatmentDialog] = useState(false);
   const [treatments, setTreatments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const loadTreatments = useCallback(async () => {
     if (!slugParam) return;
     try {
+      setLoading(true);
       // Turn slug like 'PA-0001' into digits (e.g., 1)
       const digitsMatch = String(slugParam).match(/\d+/);
       const catIdNum = digitsMatch ? Number(digitsMatch[0]) : undefined;
@@ -48,8 +51,14 @@ export default function CatDetailPage() {
       setTreatments(mapped);
     } catch (err) {
       console.error("Failed to load treatments for cat:", err);
+    } finally {
+      setLoading(false);
     }
   }, [slugParam]);
+
+  useEffect(() => {
+    loadTreatments();
+  }, [loadTreatments]);
 
   return (
     <DashboardLayout>
@@ -110,15 +119,26 @@ export default function CatDetailPage() {
                         <th className="text-left py-3 px-4 text-muted-foreground font-medium">Given By</th>
                       </tr>
                     </thead>
-                            <tbody>
-                              {treatments.map((treatment, index) => (
-                        <tr key={index} className="border-b border-border">
-                          <td className="py-3 px-4 text-foreground text-sm">{treatment.date}</td>
-                          <td className="py-3 px-4 text-foreground text-sm">{treatment.temp}</td>
-                          <td className="py-3 px-4 text-foreground text-sm">{treatment.treatment}</td>
-                          <td className="py-3 px-4 text-foreground text-sm">{treatment.givenBy}</td>
-                        </tr>
-                      ))}
+                    <tbody>
+                      {loading ? (
+                        [...Array(3)].map((_, i) => (
+                          <tr key={i} className="border-b border-border">
+                            <td className="py-3 px-4"><Skeleton className="h-4 w-32" /></td>
+                            <td className="py-3 px-4"><Skeleton className="h-4 w-12" /></td>
+                            <td className="py-3 px-4"><Skeleton className="h-4 w-40" /></td>
+                            <td className="py-3 px-4"><Skeleton className="h-4 w-24" /></td>
+                          </tr>
+                        ))
+                      ) : (
+                        treatments.map((treatment, index) => (
+                          <tr key={index} className="border-b border-border">
+                            <td className="py-3 px-4 text-foreground text-sm">{treatment.date}</td>
+                            <td className="py-3 px-4 text-foreground text-sm">{treatment.temp}</td>
+                            <td className="py-3 px-4 text-foreground text-sm">{treatment.treatment}</td>
+                            <td className="py-3 px-4 text-foreground text-sm">{treatment.givenBy}</td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

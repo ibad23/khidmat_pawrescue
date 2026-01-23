@@ -60,11 +60,11 @@ export default function LoginPage() {
         <div className="flex-1 flex items-center justify-center bg-background p-8">
           <div className="w-full max-w-md space-y-8">
             <div className="flex justify-center mb-8">
-              <Logo />
+              <Logo className="w-[200]" />
             </div>
 
             <div className="space-y-6">
-              <h1 className="text-3xl font-bold text-foreground">Login</h1>
+              <h1 className="text-3xl font-medium text-foreground">Login</h1>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
@@ -74,7 +74,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="xyz@abcmail.com"
+                    placeholder="user@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-secondary border-border"

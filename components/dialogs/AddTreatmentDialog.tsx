@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { formatCatId, formatForDatetimeLocal } from "@/lib/utils";
 
 interface AddTreatmentDialogProps {
   open: boolean;
@@ -25,11 +26,6 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
   const [catName, setCatName] = useState("");
   const [cats, setCats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  const formatForDatetimeLocal = (d: Date) => {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
   const [dateTimeLocal, setDateTimeLocal] = useState<string>(() => formatForDatetimeLocal(new Date()));
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,7 +154,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
           <div className="space-y-2">
             <Label>Cat ID</Label>
             <Input
-              value={catId ? `PA-${String(catId).padStart(3, '0')}` : ""}
+              value={catId ? formatCatId(Number(catId)) : ""}
               disabled
               placeholder="Auto-filled"
               className="bg-muted border-border"

@@ -7,13 +7,15 @@ import { ChevronDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { DashboardData, CatStatusDataPoint, TopReporter } from "@/lib/types";
 
 const DashboardPage = () => {
   const [dateFilter, setDateFilter] = useState<string>("Till Date");
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -31,6 +33,15 @@ const DashboardPage = () => {
     };
     fetchDashboard();
   }, [dateFilter]);
+
+  // Format contact: insert a hyphen after the first 4 digits for display
+  const formatContact = (c?: string | null) => {
+    if (!c) return null;
+    const digits = c.replace(/\D/g, "");
+    if (!digits) return null;
+    if (digits.length <= 4) return digits;
+    return `${digits.slice(0,4)}-${digits.slice(4)}`;
+  };
 
   return (
     <DashboardLayout>
@@ -54,7 +65,59 @@ const DashboardPage = () => {
         </div>
 
         {loading ? (
-          <div className="text-center text-muted-foreground">Loading dashboard...</div>
+          <div className="space-y-6">
+            {/* Skeleton for stat cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="bg-card border-border">
+                  <CardHeader>
+                    <Skeleton className="h-4 w-32" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-20" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Skeleton for line chart */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <Skeleton className="h-5 w-48" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-80 w-full" />
+              </CardContent>
+            </Card>
+
+            {/* Skeleton for bottom cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <Skeleton className="h-5 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-80 w-full" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <Skeleton className="h-5 w-40" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="flex justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         ) : dashboardData ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -134,19 +197,23 @@ const DashboardPage = () => {
                   <CardTitle className="text-foreground">Cats Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80 flex items-center justify-center">
+                  <div className="h-96 flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={dashboardData.catStatusData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
+                          // slightly larger pie and thicker slices for better visibility
+                          innerRadius="30%"
+                          outerRadius="85%"
                           paddingAngle={2}
                           dataKey="value"
+                          // remove white borders between slices
+                          stroke="none"
+                          strokeWidth={0}
                         >
-                          {dashboardData.catStatusData.map((entry: any, index: number) => (
+                          {dashboardData.catStatusData.map((entry: CatStatusDataPoint, index: number) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
@@ -163,7 +230,8 @@ const DashboardPage = () => {
                           align="right"
                           layout="vertical"
                           iconType="circle"
-                          wrapperStyle={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))' }}
+                          iconSize={14}
+                          wrapperStyle={{ fontSize: '14px', color: 'hsl(var(--muted-foreground))' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -173,22 +241,35 @@ const DashboardPage = () => {
 
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Top 5 Reporters/Owners</CardTitle>
+                  <CardTitle className="text-foreground">Top Owners</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-center">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="text-sm text-muted-foreground font-normal py-2 text-center">Name</th>
-                          <th className="text-sm text-muted-foreground font-normal py-2 text-center">No of Cats</th>
+                          <th className="text-sm text-muted-foreground font-normal py-2 text-left">Name</th>
+                          <th className="text-sm text-muted-foreground font-normal py-2 text-left">Contact</th>
+                          <th className="text-sm text-muted-foreground font-normal py-2 text-right">No of Cats</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {dashboardData.topReporters.map((reporter: any, index: number) => (
+                        {dashboardData.topReporters.map((reporter: TopReporter, index: number) => (
                           <tr key={index} className="border-b border-border last:border-b-0">
-                            <td className="text-foreground py-2 text-center">{reporter.name}</td>
-                            <td className="text-foreground py-2 text-center">{reporter.count}</td>
+                            <td className="text-foreground py-2 text-left">{reporter.name}</td>
+                            <td className="text-foreground py-2 text-left">
+                              {reporter.contact ? (
+                                <a
+                                  href={`tel:${(reporter.contact ?? "").replace(/\D/g, "")}`}
+                                  className="text-foreground hover:underline"
+                                >
+                                  {formatContact(reporter.contact) ?? reporter.contact}
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="text-foreground py-2 text-right">{reporter.count}</td>
                           </tr>
                         ))}
                       </tbody>

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 
 type SidebarState = "open" | "collapsed";
 
@@ -13,9 +12,15 @@ const SidebarContext = React.createContext<{
   setState: (s: SidebarState) => void;
 } | null>(null);
 
+// Sidebar collapse/expand removed: provider now keeps sidebar always open
 export const SidebarProvider = ({ children, defaultOpen = true }: { children: React.ReactNode; defaultOpen?: boolean }) => {
-  const [state, setState] = React.useState<SidebarState>(defaultOpen ? "open" : "collapsed");
-  const toggle = React.useCallback(() => setState((s) => (s === "open" ? "collapsed" : "open")), []);
+  const state: SidebarState = "open";
+  const toggle = React.useCallback(() => {
+    // no-op: collapse/expand removed
+  }, []);
+  const setState = React.useCallback((s: SidebarState) => {
+    // no-op
+  }, []);
   return <SidebarContext.Provider value={{ state, toggle, setState }}>{children}</SidebarContext.Provider>;
 };
 
@@ -86,27 +91,8 @@ export const SidebarMenuButton = React.forwardRef<HTMLButtonElement, React.Butto
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
 export const SidebarTrigger = ({ className, children }: { className?: string; children?: React.ReactNode }) => {
-  const { toggle, state } = useSidebar();
-  const collapsed = state === "collapsed";
-
-  return (
-    <button
-      onClick={toggle}
-      className={cn(
-        "p-2 rounded-md hover:bg-accent/20 flex items-center justify-center",
-        className
-      )}
-      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      aria-expanded={!collapsed}
-    >
-      {children ?? (
-        <span className="inline-flex items-center">
-          {/* Show a chevron that points toward the action (expand -> right, collapse -> left) */}
-          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </span>
-      )}
-    </button>
-  );
+  // Trigger removed: collapse/expand functionality intentionally disabled.
+  return null;
 };
 
 export default Sidebar;

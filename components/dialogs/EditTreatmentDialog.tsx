@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import axios from "axios";
+import { formatCatId, formatForDatetimeLocal } from "@/lib/utils";
 
 interface EditTreatmentDialogProps {
   open: boolean;
@@ -31,10 +32,6 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
     id: undefined as number | undefined,
   });
 
-  const formatForDatetimeLocal = (d: Date) => {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
   const [dateTimeLocal, setDateTimeLocal] = useState<string>(() => formatForDatetimeLocal(new Date()));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,7 +94,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
       const mapped = {
         id: updated.treatment_id,
         catIdNum: updated.cat_id,
-        catId: `PA-${String(updated.cat_id).padStart(3, '0')}`,
+        catId: formatCatId(updated.cat_id),
         catName: updated.cats?.cat_name || "",
         cageNo: updated.cats?.cage?.cage_no || "",
         temp: updated.temperature || formData.temp,
@@ -146,7 +143,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
                 </SelectTrigger>
                 <SelectContent>
                   {cats.map(cat => (
-                    <SelectItem key={cat.cat_id} value={String(cat.cat_id)}>{`PA-${String(cat.cat_id).padStart(3, '0')}`}</SelectItem>
+                    <SelectItem key={cat.cat_id} value={String(cat.cat_id)}>{formatCatId(cat.cat_id)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
