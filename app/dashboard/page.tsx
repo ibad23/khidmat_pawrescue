@@ -169,11 +169,17 @@ const DashboardPage = () => {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/20" />
                       <XAxis dataKey="month" className="stroke-muted-foreground" />
                       <YAxis className="stroke-muted-foreground" />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))', 
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
                           borderRadius: '8px',
+                          color: 'hsl(var(--card-foreground))'
+                        }}
+                        itemStyle={{
+                          color: 'hsl(var(--card-foreground))'
+                        }}
+                        labelStyle={{
                           color: 'hsl(var(--card-foreground))'
                         }}
                       />
@@ -217,11 +223,17 @@ const DashboardPage = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--card))', 
-                            border: '1px solid hsl(var(--border))', 
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
                             borderRadius: '8px',
+                            color: 'hsl(var(--card-foreground))'
+                          }}
+                          itemStyle={{
+                            color: 'hsl(var(--card-foreground))'
+                          }}
+                          labelStyle={{
                             color: 'hsl(var(--card-foreground))'
                           }}
                         />

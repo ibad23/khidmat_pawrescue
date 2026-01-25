@@ -72,7 +72,7 @@ export default function CatDetailPage() {
             onClick={() => setShowAddTreatmentDialog(true)}
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
-            +Add Treatment
+            + Add Treatment
           </Button>
         </div>
 

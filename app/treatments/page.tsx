@@ -5,7 +5,7 @@ import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Filter, RotateCcw, MoreVertical } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
 import { AddTreatmentDialog } from "@/components/dialogs/AddTreatmentDialog";
 import { EditTreatmentDialog } from "@/components/dialogs/EditTreatmentDialog";
 import { DeleteTreatmentDialog } from "@/components/dialogs/DeleteTreatmentDialog";
@@ -26,6 +26,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCatId } from "@/lib/utils";
 import { Treatment } from "@/lib/types";
 
+const ITEMS_PER_PAGE = 15;
+
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ export default function TreatmentsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null);
   const [catFilter, setCatFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadTreatments = useCallback(async () => {
     try {
@@ -104,13 +107,55 @@ export default function TreatmentsPage() {
     return Array.from(cats.entries());
   }, [treatments]);
 
-  const filteredTreatments = treatments.filter((treatment) => {
-    if (catFilter && catFilter !== "all" && treatment.catId !== catFilter) return false;
-    return true;
-  });
+  // Filter treatments
+  const filteredTreatments = useMemo(() => {
+    return treatments.filter((treatment) => {
+      if (catFilter && catFilter !== "all" && treatment.catId !== catFilter) return false;
+      return true;
+    });
+  }, [treatments, catFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTreatments.length / ITEMS_PER_PAGE);
+  const paginatedTreatments = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTreatments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredTreatments, currentPage]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [catFilter]);
 
   const handleResetFilter = () => {
     setCatFilter("all");
+    setCurrentPage(1);
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) pages.push("...");
+      if (!pages.includes(totalPages)) pages.push(totalPages);
+    }
+    return pages;
   };
 
   useEffect(() => {
@@ -140,12 +185,10 @@ export default function TreatmentsPage() {
               <Filter className="w-5 h-5" />
             </Button>
 
-            <Button variant="outline" className="gap-2">
-              Filter By
-            </Button>
+            <span className="text-sm text-muted-foreground">Filter By</span>
 
             <Select value={catFilter} onValueChange={setCatFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Cat ID" />
               </SelectTrigger>
               <SelectContent>
@@ -195,14 +238,20 @@ export default function TreatmentsPage() {
                     <td className="py-4 px-4"><Skeleton className="h-8 w-8 rounded" /></td>
                   </tr>
                 ))
+              ) : paginatedTreatments.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                    No treatments found.
+                  </td>
+                </tr>
               ) : (
-                filteredTreatments.map((treatment) => (
+                paginatedTreatments.map((treatment) => (
                   <tr key={treatment.id} className="border-b border-border hover:bg-card/50">
                     <td className="py-4 px-4 text-foreground">{treatment.catId}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.catName}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.cageNo}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.temp}</td>
-                    <td className="py-4 px-4 text-foreground">{treatment.treatment}</td>
+                    <td className="py-4 px-4 text-foreground max-w-xs truncate">{treatment.treatment}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.time}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.givenBy}</td>
                     <td className="py-4 px-4">
@@ -224,6 +273,52 @@ export default function TreatmentsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredTreatments.length)} of {filteredTreatments.length} treatments
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {getPageNumbers().map((page, index) => (
+                typeof page === "number" ? (
+                  <Button
+                    key={index}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className={`h-8 w-8 ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
+                  >
+                    {page}
+                  </Button>
+                ) : (
+                  <span key={index} className="px-2 text-muted-foreground">...</span>
+                )
+              ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <AddTreatmentDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddTreatment} />

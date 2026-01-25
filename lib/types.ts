@@ -57,12 +57,17 @@ export interface Ward {
   freeCages: number;
 }
 
+export interface InternalRole {
+  internal_role_id: number;
+  role_desc: string;
+}
+
 export interface TeamMember {
   id: number;
   name: string;
   email: string;
   role: string;
-  status: "Active" | "Inactive";
+  roleId: number;
 }
 
 // ============================================

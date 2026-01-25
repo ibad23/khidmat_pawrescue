@@ -1,29 +1,24 @@
 import { NextResponse } from "next/server";
 import client from "@/app/api/client";
 
-// PATCH endpoint to update a treatment record]
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { treatment_id, cat_id, temperature, treatment } = body;
+    const { treatment_id, cat_id, temperature, treatment, date_time } = body;
 
-    // Check if treatment_id is provided
     if (!treatment_id) {
       return NextResponse.json({ error: "treatment_id required" }, { status: 400 });
     }
 
-    // Convert treatment_id to number and update record
     const id = Number(treatment_id);
-    const payload: any = {
-      date_time: new Date().toISOString(),
-    };
+    const payload: any = {};
 
     // Add fields if they are provided in request
     if (cat_id !== undefined) payload.cat_id = Number(cat_id);
     if (temperature !== undefined) payload.temperature = temperature;
     if (treatment !== undefined) payload.treatment = treatment;
+    if (date_time !== undefined) payload.date_time = date_time;
 
-    // Update the record in database
     const { data, error } = await client
       .from("treatment")
       .update(payload)

@@ -4,12 +4,24 @@ import client from "@/app/api/client";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { cat_id, user_id, date_time, temperature, treatment } = body;
+    const { cat_id, user_id, user_email, date_time, temperature, treatment } = body;
 
-    // cast numeric values and insert
+    // Look up user by email if provided
+    let resolvedUserId = user_id ? Number(user_id) : null;
+    if (!resolvedUserId && user_email) {
+      const { data: userData } = await client
+        .from("users")
+        .select("user_id")
+        .eq("email", user_email)
+        .single();
+      if (userData) {
+        resolvedUserId = userData.user_id;
+      }
+    }
+
     const payload: any = {
       cat_id: typeof cat_id === "string" ? Number(cat_id) : cat_id,
-      user_id: user_id ? Number(user_id) : null,
+      user_id: resolvedUserId,
       date_time: date_time || new Date().toISOString(),
       temperature: temperature || null,
       treatment: treatment || null,

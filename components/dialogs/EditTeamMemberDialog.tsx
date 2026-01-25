@@ -5,29 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { InternalRole, TeamMember } from "@/lib/types";
 
-interface AddTeamMemberDialogProps {
+interface EditTeamMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd?: (member: TeamMember) => void;
+  member: TeamMember | null;
+  onEdit?: (member: TeamMember) => void;
+  currentUserEmail?: string;
 }
 
-export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMemberDialogProps) => {
+export const EditTeamMemberDialog = ({ open, onOpenChange, member, onEdit, currentUserEmail }: EditTeamMemberDialogProps) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     roleId: "",
-    password: "",
-    confirmPassword: "",
   });
   const [roles, setRoles] = useState<InternalRole[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Populate form when member changes
+  useEffect(() => {
+    if (member) {
+      setFormData({
+        name: member.name || "",
+        email: member.email || "",
+        roleId: String(member.roleId) || "",
+      });
+    }
+  }, [member]);
 
   // Fetch roles when dialog opens
   useEffect(() => {
@@ -50,40 +60,26 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
-    // Validate password length
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
-      return;
-    }
-
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+    if (isSubmitting || !member) return;
 
     setIsSubmitting(true);
     try {
       const payload = {
+        id: member.id,
         name: formData.name,
         email: formData.email,
         roleId: Number(formData.roleId),
-        password: formData.password,
+        currentUserEmail,
       };
 
-      const res = await axios.post("/api/team/create", payload);
-      const newMember = res.data.data;
+      const res = await axios.patch("/api/team/update", payload);
+      const updatedMember = res.data.data;
 
-      toast.success("Team member added successfully");
-      onAdd?.(newMember);
+      toast.success("Team member updated successfully");
+      onEdit?.(updatedMember);
       onOpenChange(false);
-
-      // Reset form
-      setFormData({ name: "", email: "", roleId: "", password: "", confirmPassword: "" });
     } catch (err: any) {
-      const message = err.response?.data?.error || "Failed to add team member";
+      const message = err.response?.data?.error || "Failed to update team member";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -93,16 +89,10 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-md">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-5 w-5" />
-        </button>
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold">Add New Team Member</DialogTitle>
+          <DialogTitle className="text-3xl font-bold">Edit Team Member</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label>Name</Label>
             <Input
@@ -147,36 +137,7 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Password</Label>
-            <Input
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Enter password"
-              className="bg-muted border-border"
-              required
-              minLength={8}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Confirm Password</Label>
-            <Input
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder="Re-enter password"
-              className="bg-muted border-border"
-              required
-              minLength={8}
-            />
-            <p className="text-xs text-muted-foreground">
-              Use a strong password with at least 8 characters.
-            </p>
-          </div>
-
-          <div className="flex gap-4 justify-end pt-2">
+          <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
@@ -185,7 +146,7 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={isSubmitting || loadingRoles}
             >
-              {isSubmitting ? "Adding..." : "Add Member"}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
@@ -194,4 +155,4 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
   );
 };
 
-export default AddTeamMemberDialog;
+export default EditTeamMemberDialog;

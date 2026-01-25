@@ -59,7 +59,6 @@ CREATE TABLE users (
   user_name TEXT,
   email TEXT,
   password TEXT,
-  picture BYTEA,
   internal_role_id BIGINT REFERENCES internal_role(internal_role_id) ON DELETE SET NULL
 );
 
@@ -134,7 +133,7 @@ INSERT INTO internal_role (internal_role_id, role_desc) VALUES (2, 'Moderator') 
 INSERT INTO internal_role (internal_role_id, role_desc) VALUES (3, 'Surgeon') ON CONFLICT DO NOTHING;
 
 INSERT INTO externals (external_id, name, contact_num, address) VALUES (1, 'Seed External', '0000000000', NULL) ON CONFLICT DO NOTHING;
-INSERT INTO users (user_id, user_name, email, password, picture, internal_role_id) VALUES (1, 'Ahmed Bilal', 'crazy_bilal@gmail.com', 'bilal', NULL, 1) ON CONFLICT DO NOTHING;
+INSERT INTO users (user_id, user_name, email, password, internal_role_id) VALUES (1, 'Ahmed Bilal', 'crazy_bilal@gmail.com', 'bilal', 1) ON CONFLICT DO NOTHING;
 
 -- Add helpful comments for Supabase usage
 COMMENT ON TYPE mode_enum IS 'Donation/Transaction mode (converted from MSSQL Mode table)';

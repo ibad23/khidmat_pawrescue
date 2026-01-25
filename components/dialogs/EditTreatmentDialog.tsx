@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import axios from "axios";
@@ -22,12 +21,14 @@ interface EditTreatmentDialogProps {
 export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: EditTreatmentDialogProps) => {
   const [cats, setCats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [catIdSearch, setCatIdSearch] = useState("");
+  const [catNameSearch, setCatNameSearch] = useState("");
+  const [selectedCat, setSelectedCat] = useState<any>(null);
+  const [showCatIdDropdown, setShowCatIdDropdown] = useState(false);
+  const [showCatNameDropdown, setShowCatNameDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
-    catId: "",
-    catName: "",
-    cageNo: "",
-    temp: 100 as number,
+    temp: 100,
     treatment: "",
     id: undefined as number | undefined,
   });
@@ -48,66 +49,109 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
         setLoading(false);
       }
     };
-    fetchCats();
-  }, []);
+    if (open) fetchCats();
+  }, [open]);
 
   // Auto-fill form when treatment data is provided
   useEffect(() => {
-    if (treatment) {
+    if (treatment && cats.length > 0) {
       const tempStr = String(treatment.temp || "100").replace(/[°F]/g, "");
       const tempNum = Number(tempStr) || 100;
-      const numericCatId = String(treatment.catIdNum || "");
-      
+
+      // Find the cat in the cats list
+      const cat = cats.find(c => c.cat_id === treatment.catIdNum);
+      if (cat) {
+        setSelectedCat(cat);
+        setCatIdSearch(formatCatId(cat.cat_id));
+        setCatNameSearch(cat.cat_name);
+      } else {
+        setCatIdSearch(treatment.catId || "");
+        setCatNameSearch(treatment.catName || "");
+      }
+
       setFormData({
-        catId: numericCatId,
-        catName: treatment.catName || "",
-        cageNo: treatment.cageNo || "",
         temp: tempNum,
         treatment: treatment.treatment || "",
         id: treatment.id,
       });
-      const dt = (treatment?.date_time && new Date(treatment.date_time)) || new Date();
-      setDateTimeLocal(formatForDatetimeLocal(dt));
+
+      // Parse the time from treatment
+      const dt = treatment.time ? new Date(treatment.time) : new Date();
+      if (!isNaN(dt.getTime())) {
+        setDateTimeLocal(formatForDatetimeLocal(dt));
+      }
     }
-  }, [treatment]);
+  }, [treatment, cats]);
+
+  // Filter cats based on ID search
+  const filteredCatsById = useMemo(() => {
+    if (!catIdSearch) return cats;
+    const search = catIdSearch.toLowerCase();
+    return cats.filter(cat =>
+      formatCatId(cat.cat_id).toLowerCase().includes(search) ||
+      String(cat.cat_id).includes(search)
+    );
+  }, [cats, catIdSearch]);
+
+  // Filter cats based on name search
+  const filteredCatsByName = useMemo(() => {
+    if (!catNameSearch) return cats;
+    const search = catNameSearch.toLowerCase();
+    return cats.filter(cat =>
+      cat.cat_name?.toLowerCase().includes(search)
+    );
+  }, [cats, catNameSearch]);
+
+  const selectCat = (cat: any) => {
+    setSelectedCat(cat);
+    setCatIdSearch(formatCatId(cat.cat_id));
+    setCatNameSearch(cat.cat_name);
+    setShowCatIdDropdown(false);
+    setShowCatNameDropdown(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (!selectedCat) {
+      toast.error("Please select a cat");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Build payload with only the fields that need to be updated
+      const dateTimeISO = new Date(dateTimeLocal).toISOString();
+
       const payload = {
         treatment_id: Number(formData.id),
-        cat_id: Number(formData.catId),
-        temperature: formData.temp,
+        cat_id: selectedCat.cat_id,
+        temperature: `${formData.temp}°F`,
         treatment: formData.treatment,
+        date_time: dateTimeISO,
       };
 
-      // send PATCH request with axios to leverage its error handling
       const resp = await axios.patch('/api/treatments/update', payload);
-      const json = resp.data;
-      if (resp.status !== 200) throw new Error(json?.error || 'Failed to update treatment');
+      if (resp.status !== 200) throw new Error(resp.data?.error || 'Failed to update treatment');
 
-      // Map updated data back to the UI format
-      const updated = json.data;
+      const updated = resp.data.data;
       const mapped = {
         id: updated.treatment_id,
         catIdNum: updated.cat_id,
         catId: formatCatId(updated.cat_id),
         catName: updated.cats?.cat_name || "",
         cageNo: updated.cats?.cage?.cage_no || "",
-        temp: updated.temperature || formData.temp,
+        temp: updated.temperature || `${formData.temp}°F`,
         treatment: updated.treatment || formData.treatment,
         time: updated.date_time ? new Date(updated.date_time).toLocaleString() : new Date().toLocaleString(),
+        givenBy: updated.users?.user_name || "",
       };
 
-      // Call parent callback to refresh the table
       onEdit?.(mapped);
       toast.success('Treatment updated successfully');
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || 'An error occurred while updating treatment');
+      toast.error(err?.response?.data?.error || err?.message || 'An error occurred while updating treatment');
     } finally {
       setIsSubmitting(false);
     }
@@ -115,93 +159,94 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-2xl">
-        {/** no manual close button here — Dialog already renders a close icon */}
+      <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Edit Treatment</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            {/* Cat ID Dropdown */}
-            <div className="space-y-2">
+            {/* Cat ID Search */}
+            <div className="space-y-2 relative">
               <Label>Cat ID</Label>
-              <Select value={formData.catId || ""} onValueChange={(val) => {
-                const selectedCat = cats.find(c => String(c.cat_id) === val);
-                if (selectedCat) {
-                  setFormData({
-                    catId: val,
-                    catName: selectedCat.cat_name,
-                    cageNo: selectedCat.cage?.cage_no || "",
-                    temp: formData.temp,
-                    treatment: formData.treatment,
-                    id: formData.id,
-                  });
-                }
-              }}>
-                <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Select Cat ID" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cats.map(cat => (
-                    <SelectItem key={cat.cat_id} value={String(cat.cat_id)}>{formatCatId(cat.cat_id)}</SelectItem>
+              <Input
+                value={catIdSearch}
+                onChange={(e) => {
+                  setCatIdSearch(e.target.value);
+                  setSelectedCat(null);
+                  setShowCatIdDropdown(true);
+                  setShowCatNameDropdown(false);
+                }}
+                onFocus={() => setShowCatIdDropdown(true)}
+                placeholder={loading ? "Loading..." : "Search Cat ID"}
+                className="bg-muted border-border"
+                disabled={loading}
+              />
+              {showCatIdDropdown && filteredCatsById.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-auto">
+                  {filteredCatsById.slice(0, 10).map(cat => (
+                    <div
+                      key={cat.cat_id}
+                      className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                      onClick={() => selectCat(cat)}
+                    >
+                      {formatCatId(cat.cat_id)}
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
             </div>
 
-            {/* Cat Name Dropdown */}
-            <div className="space-y-2">
+            {/* Cat Name Search */}
+            <div className="space-y-2 relative">
               <Label>Cat Name</Label>
-              <Select value={formData.catName || ""} onValueChange={(val) => {
-                const selectedCat = cats.find(c => c.cat_name === val);
-                if (selectedCat) {
-                  setFormData({
-                    catId: String(selectedCat.cat_id),
-                    catName: val,
-                    cageNo: selectedCat.cage?.cage_no || "",
-                    temp: formData.temp,
-                    treatment: formData.treatment,
-                    id: formData.id,
-                  });
-                }
-              }}>
-                <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Select Cat Name" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cats.map(cat => (
-                    <SelectItem key={cat.cat_id} value={cat.cat_name}>{cat.cat_name}</SelectItem>
+              <Input
+                value={catNameSearch}
+                onChange={(e) => {
+                  setCatNameSearch(e.target.value);
+                  setSelectedCat(null);
+                  setShowCatNameDropdown(true);
+                  setShowCatIdDropdown(false);
+                }}
+                onFocus={() => setShowCatNameDropdown(true)}
+                placeholder={loading ? "Loading..." : "Search Cat Name"}
+                className="bg-muted border-border"
+                disabled={loading}
+              />
+              {showCatNameDropdown && filteredCatsByName.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-auto">
+                  {filteredCatsByName.slice(0, 10).map(cat => (
+                    <div
+                      key={cat.cat_id}
+                      className="px-3 py-2 cursor-pointer hover:bg-muted text-sm"
+                      onClick={() => selectCat(cat)}
+                    >
+                      {cat.cat_name}
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Cage Number Dropdown */}
+          {/* Show selected cat info */}
+          {selectedCat && (
+            <div className="p-3 bg-muted rounded-lg text-sm">
+              <span className="text-muted-foreground">Selected: </span>
+              <span className="font-medium">{formatCatId(selectedCat.cat_id)} - {selectedCat.cat_name}</span>
+              {selectedCat.cage?.cage_no && (
+                <span className="text-muted-foreground"> (Cage {selectedCat.cage.cage_no})</span>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label>Cage No.</Label>
-            <Select value={formData.cageNo || ""} onValueChange={(val) => {
-              const selectedCat = cats.find(c => c.cage?.cage_no === val);
-              if (selectedCat) {
-                setFormData({
-                  catId: String(selectedCat.cat_id),
-                  catName: selectedCat.cat_name,
-                  cageNo: val,
-                  temp: formData.temp,
-                  treatment: formData.treatment,
-                  id: formData.id,
-                });
-              }
-            }}>
-              <SelectTrigger className="bg-muted border-border">
-                <SelectValue placeholder="Select Cage No." />
-              </SelectTrigger>
-              <SelectContent>
-                {cats.map(cat => (
-                  <SelectItem key={cat.cat_id} value={cat.cage?.cage_no || ""}>{cat.cage?.cage_no || "N/A"}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Date / Time</Label>
+            <Input
+              type="datetime-local"
+              value={dateTimeLocal}
+              onChange={(e) => setDateTimeLocal(e.target.value)}
+              className="bg-muted border-border"
+            />
           </div>
 
           <div className="space-y-2">
@@ -215,7 +260,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-xl font-medium flex-1 text-center">{formData.temp} F</span>
+              <span className="text-xl font-medium flex-1 text-center">{formData.temp}°F</span>
               <Button
                 type="button"
                 size="icon"
@@ -238,21 +283,15 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Time</Label>
-            <Input
-              type="datetime-local"
-              value={dateTimeLocal}
-              disabled
-              className="bg-muted border-border"
-            />
-          </div>
-
-          <div className="flex gap-4 justify-end">
+          <div className="flex gap-4 justify-end pt-2">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              disabled={isSubmitting || !selectedCat}
+            >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>

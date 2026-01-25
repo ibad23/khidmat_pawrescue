@@ -92,6 +92,9 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 14% 20%;
     --sidebar-ring: 38 92% 50%;
+
+    /* Hover colors - more visible yellow for dark mode */
+    --hover-light-yellow: 45 100% 50% / 0.2;
   }
 }
 

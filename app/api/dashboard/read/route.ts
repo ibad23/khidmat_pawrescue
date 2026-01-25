@@ -75,11 +75,10 @@ export async function GET(req: NextRequest) {
       value: monthlyDonations[month] || 0,
     }));
 
-    // Get top owners (external_role_id = 1)
+    // Get top owners/reporters
     let ownersQuery = client
       .from("cats")
-      // include contact_num from externals so we can show reporter contact
-      .select("external_id, externals(name, external_role_id, contact_num)")
+      .select("external_id, externals(name, contact_num)")
       .not("external_id", "is", null);
 
     if (startDate) {
@@ -91,7 +90,7 @@ export async function GET(req: NextRequest) {
     const ownerCounts: Record<string, number> = {};
     const ownerContacts: Record<string, string | null> = {};
     ownersData?.forEach((cat: any) => {
-      if (cat.externals?.external_role_id === 1) {
+      if (cat.externals) {
         const name = cat.externals?.name || "Unknown";
         const contact = cat.externals?.contact_num ?? null;
         ownerCounts[name] = (ownerCounts[name] || 0) + 1;
