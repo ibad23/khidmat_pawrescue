@@ -9,35 +9,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import axios from "axios";
 
 interface AddTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd?: (transaction: any) => void;
+  onAdd?: () => void;
 }
 
 export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransactionDialogProps) => {
   const [formData, setFormData] = useState({
-    billFor: "Chicken",
-    mode: "cash",
-    amount: "1000 PKR",
-    remarks: "-",
+    billFor: "",
+    mode: "",
+    amount: "",
+    remarks: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newTransaction = {
-      id: `T-${String(Date.now()).slice(-4)}`,
-      billFor: formData.billFor,
-      amount: formData.amount,
-      mode: formData.mode,
-      remarks: formData.remarks,
-      date: new Date().toLocaleDateString(),
-    };
-    onAdd?.(newTransaction);
-    toast.success("Transaction added successfully");
-    onOpenChange(false);
-    setFormData({ billFor: "", amount: "", mode: "cash", remarks: "" });
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await axios.post("/api/transactions/create", {
+        bill_for: formData.billFor,
+        mode: formData.mode,
+        amount: formData.amount,
+        remarks: formData.remarks,
+      });
+      onAdd?.();
+      toast.success("Transaction added successfully");
+      onOpenChange(false);
+      setFormData({ billFor: "", amount: "", mode: "", remarks: "" });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Failed to add transaction");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,6 +66,7 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
             <Input
               value={formData.billFor}
               onChange={(e) => setFormData({ ...formData, billFor: e.target.value })}
+              placeholder="Enter bill description"
               className="bg-muted border-border"
               required
             />
@@ -66,26 +75,26 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Mode</Label>
-            <Select value={formData.mode} onValueChange={(value) => setFormData({ ...formData, mode: value })} required>
-              <SelectTrigger className="bg-muted border-border">
-                <SelectValue placeholder="Select payment mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="bank">Bank Transfer</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={formData.mode} onValueChange={(value) => setFormData({ ...formData, mode: value })} required>
+                <SelectTrigger className="bg-muted border-border">
+                  <SelectValue placeholder="Select payment mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Online">Online</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Amount</Label>
-            <Input
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="Enter amount (e.g., 5000 PKR)"
-              className="bg-muted border-border"
-              required
-            />
+              <Input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="Enter amount"
+                className="bg-muted border-border"
+                required
+              />
             </div>
           </div>
 
@@ -94,17 +103,17 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
             <Textarea
               value={formData.remarks}
               onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+              placeholder="Enter remarks"
               className="bg-muted border-border min-h-[200px]"
-              required
             />
           </div>
 
-          <div className="flex gap-4">
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Add Revenue
-            </Button>
+          <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
+            </Button>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+              {isSubmitting ? "Adding..." : "Add Transaction"}
             </Button>
           </div>
         </form>

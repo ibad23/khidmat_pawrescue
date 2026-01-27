@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatCatId, formatCageNo } from "@/lib/utils";
+import { formatCageNo } from "@/lib/utils";
 
 interface External {
   external_id: number;
@@ -18,13 +18,28 @@ interface External {
   address: string;
 }
 
-interface AddCatDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onAdd?: (cat: any) => void;
+interface CatData {
+  cat_id: number;
+  cat_name: string;
+  age: number | null;
+  gender: string;
+  type: string;
+  cage_id: number | null;
+  cage_no: number | null;
+  status: string;
+  owner_name: string;
+  contact_num: string;
+  address: string;
 }
 
-export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) => {
+interface EditCatDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  cat: CatData | null;
+  onEdit?: () => void;
+}
+
+export const EditCatDialog = ({ open, onOpenChange, cat, onEdit }: EditCatDialogProps) => {
   const [formData, setFormData] = useState({
     catName: "",
     age: "",
@@ -41,6 +56,24 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
   const [externals, setExternals] = useState<External[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  // Populate form when cat changes
+  useEffect(() => {
+    if (cat) {
+      setFormData({
+        catName: cat.cat_name || "",
+        age: cat.age !== null ? String(cat.age) : "",
+        gender: cat.gender || "",
+        type: cat.type || "",
+        cageId: cat.cage_id !== null ? String(cat.cage_id) : "none",
+        status: cat.status || "",
+        ownerName: cat.owner_name || "",
+        contactNo: cat.contact_num || "",
+        address: cat.address || "",
+      });
+    }
+  }, [cat]);
 
   // Find matching external based on owner name
   const matchingExternal = useMemo(() => {
@@ -50,68 +83,69 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     );
   }, [formData.ownerName, externals]);
 
-  // Auto-fill contact and address when owner name matches
+  // Auto-fill contact and address when owner name matches (only if different from current)
   useEffect(() => {
-    if (matchingExternal) {
-      setFormData((prev) => ({
-        ...prev,
-        contactNo: matchingExternal.contact_num || prev.contactNo,
-        address: matchingExternal.address || prev.address,
-      }));
+    if (matchingExternal && cat) {
+      // Only auto-fill if it's a different owner than the current one
+      if (matchingExternal.name !== cat.owner_name) {
+        setFormData((prev) => ({
+          ...prev,
+          contactNo: matchingExternal.contact_num || prev.contactNo,
+          address: matchingExternal.address || prev.address,
+        }));
+      }
     }
-  }, [matchingExternal]);
+  }, [matchingExternal, cat]);
+
+  // Get unique owner names for autocomplete
+  const ownerSuggestions = useMemo(() => {
+    return externals.filter((ext) => ext.name).map((ext) => ext.name);
+  }, [externals]);
+
+  // Combined cage options: free cages + current cage if assigned
+  const allCageOptions = useMemo(() => {
+    if (!cat?.cage_id || !cat?.cage_no) return cageOptions;
+
+    // Check if current cage is already in the free list
+    const currentCageInList = cageOptions.some((c) => c.cage_id === cat.cage_id);
+    if (currentCageInList) return cageOptions;
+
+    // Add current cage to the list
+    return [
+      { cage_id: cat.cage_id, cage_no: cat.cage_no, isCurrent: true },
+      ...cageOptions,
+    ];
+  }, [cageOptions, cat]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || !cat) return;
 
     setIsSubmitting(true);
     try {
       const payload: any = {
+        cat_id: cat.cat_id,
         cat_name: formData.catName,
         age: formData.age ? Number(formData.age) : null,
         gender: formData.gender || null,
         type: formData.type || null,
-        cage_id: formData.cageId ? Number(formData.cageId) : null,
+        cage_id: formData.cageId && formData.cageId !== "none" ? Number(formData.cageId) : null,
         status: formData.status || null,
         owner_name: formData.ownerName || null,
         contact_num: formData.contactNo || null,
         address: formData.address || null,
+        old_cage_id: cat.cage_id,
       };
 
-      const res = await axios.post("/api/cats/create", payload);
-      const created = res.data?.data;
-      if (!created) throw new Error(res.data?.error || "Create failed");
+      const res = await axios.patch("/api/cats/update", payload);
+      if (res.data?.error) throw new Error(res.data.error);
 
-      const mapped = {
-        id: formatCatId(created.cat_id),
-        name: created.cat_name,
-        owner: created.externals?.name || "",
-        contact: created.externals?.contact_num || "",
-        date: created.admitted_on ? new Date(created.admitted_on).toLocaleDateString() : "",
-        type: created.type || "",
-        cage: created.cage?.cage_no ? formatCageNo(created.cage.cage_no) : "-",
-        status: created.status || "",
-        color: "purple",
-      };
-
-      onAdd?.(mapped);
-      toast.success("Cat added successfully");
+      toast.success("Cat updated successfully");
+      onEdit?.();
       onOpenChange(false);
-      setFormData({
-        catName: "",
-        age: "",
-        gender: "",
-        type: "",
-        cageId: "",
-        status: "",
-        ownerName: "",
-        contactNo: "",
-        address: "",
-      });
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Failed to add cat");
+      toast.error(err?.response?.data?.error || err?.message || "Failed to update cat");
     } finally {
       setIsSubmitting(false);
     }
@@ -119,6 +153,7 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
 
   useEffect(() => {
     const loadOptions = async () => {
+      setLoadingOptions(true);
       try {
         const [cageRes, statusRes, externalsRes] = await Promise.all([
           axios.get("/api/cages/free"),
@@ -130,6 +165,8 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
         setExternals(externalsRes.data?.data || []);
       } catch (err) {
         console.error("Failed to load options", err);
+      } finally {
+        setLoadingOptions(false);
       }
     };
     if (open) {
@@ -137,23 +174,18 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     }
   }, [open]);
 
-  // Get unique owner names for autocomplete
-  const ownerSuggestions = useMemo(() => {
-    return externals.filter((ext) => ext.name).map((ext) => ext.name);
-  }, [externals]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold">Add a New Cat</DialogTitle>
+          <DialogTitle className="text-3xl font-bold">Edit Cat</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Cat ID</Label>
               <Input
-                placeholder="System Will generate ID"
+                value={cat ? `PA-${String(cat.cat_id).padStart(4, "0")}` : ""}
                 className="bg-muted border-border"
                 disabled
               />
@@ -212,13 +244,20 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
             </div>
             <div className="space-y-2">
               <Label>Cage No.</Label>
-              <Select value={formData.cageId} onValueChange={(value) => setFormData({ ...formData, cageId: value })}>
+              <Select
+                value={formData.cageId}
+                onValueChange={(value) => setFormData({ ...formData, cageId: value })}
+                disabled={loadingOptions}
+              >
                 <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Please Select" />
+                  <SelectValue placeholder={loadingOptions ? "Loading..." : "Please Select"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {cageOptions.map((c) => (
-                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{formatCageNo(c.cage_no)}</SelectItem>
+                  <SelectItem value="none">No Cage</SelectItem>
+                  {allCageOptions.map((c) => (
+                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>
+                      {formatCageNo(c.cage_no)}{c.isCurrent ? " (Current)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -227,9 +266,13 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
 
           <div className="space-y-2">
             <Label>Status</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+              disabled={loadingOptions}
+            >
               <SelectTrigger className="bg-muted border-border">
-                <SelectValue placeholder="Please Select" />
+                <SelectValue placeholder={loadingOptions ? "Loading..." : "Please Select"} />
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map((s) => (
@@ -246,16 +289,16 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                 placeholder="Enter Owner Name"
                 className="bg-muted border-border"
                 required
-                list="owner-suggestions"
+                list="owner-suggestions-edit"
                 value={formData.ownerName}
                 onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
               />
-              <datalist id="owner-suggestions">
+              <datalist id="owner-suggestions-edit">
                 {ownerSuggestions.map((name) => (
                   <option key={name} value={name} />
                 ))}
               </datalist>
-              {matchingExternal && (
+              {matchingExternal && matchingExternal.name !== cat?.owner_name && (
                 <p className="text-xs text-muted-foreground">
                   Existing owner found - contact and address auto-filled
                 </p>
@@ -297,9 +340,9 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
             <Button
               type="submit"
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isSubmitting}
+              disabled={isSubmitting || loadingOptions}
             >
-              {isSubmitting ? "Adding..." : "Add Cat"}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
@@ -308,4 +351,4 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
   );
 };
 
-export default AddCatDialog;
+export default EditCatDialog;

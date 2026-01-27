@@ -200,8 +200,8 @@ export default function TreatmentsPage() {
             </Select>
 
             <Button
-              variant="ghost"
-              className="gap-2 text-primary hover:bg-[hsl(var(--hover-light-yellow))]"
+              variant="outline"
+              className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={handleResetFilter}
             >
               <RotateCcw className="w-4 h-4" />

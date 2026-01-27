@@ -86,7 +86,7 @@ export default function WardDetailPage() {
               </Select>
             </div>
 
-            <Button variant="ghost" className="gap-2 text-primary hover:bg-[hsl(var(--hover-light-yellow))]">
+            <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors">
               <RotateCcw className="w-4 h-4" />
               Reset Filter
             </Button>

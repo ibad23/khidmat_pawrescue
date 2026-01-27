@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       .order("cat_id", { ascending: false })
       .limit(1)
       .single();
-    if (lastErr) return NextResponse.json({ error: lastErr.message }, { status: 501 });
+    if (lastErr) return NextResponse.json({ error: lastErr.message }, { status: 500 });
     const nextId = ((lastCat as any)?.cat_id ?? 0) + 1;
 
     const payload: any = {
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       )
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 502 });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     // If cage was assigned, mark cage as Occupied
     if (payload.cage_id) {
@@ -104,6 +104,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: String(err) }, { status: 503 });
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

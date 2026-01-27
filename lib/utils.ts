@@ -34,10 +34,31 @@ export function formatForDatetimeLocal(date: Date): string {
 export function mapStatusToColor(status?: string): StatusColor {
   if (!status) return "purple";
   const s = status.toLowerCase();
-  if (s.includes("expired")) return "danger";
-  if (s.includes("under treatment")) return "info";
-  if (s.includes("move") || s.includes("healthy")) return "success";
-  if (s.includes("adopt")) return "warning";
-  if (s.includes("discharge") || s.includes("foster")) return "purple";
+
+  // Danger/Red - Critical or expired
+  if (s.includes("expired") || s.includes("critical") || s.includes("deceased") || s.includes("dead")) {
+    return "danger";
+  }
+
+  // Info/Blue - Under treatment or recovering
+  if (s.includes("under treatment") || s.includes("treatment") || s.includes("recovering")) {
+    return "info";
+  }
+
+  // Success/Green - Healthy outcomes
+  if (s.includes("healthy") || s.includes("recovered") || s.includes("move") || s.includes("stable")) {
+    return "success";
+  }
+
+  // Warning/Orange - Adoption-related or pending
+  if (s.includes("adopt") || s.includes("available") || s.includes("pending")) {
+    return "warning";
+  }
+
+  // Purple - Discharged/Foster/Released
+  if (s.includes("discharge") || s.includes("foster") || s.includes("released")) {
+    return "purple";
+  }
+
   return "purple";
 }

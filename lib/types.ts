@@ -112,12 +112,56 @@ export interface DashboardData {
 export type StatusColor = "success" | "danger" | "info" | "warning" | "purple";
 
 export const STATUS_COLORS: Record<StatusColor, string> = {
-  success: "bg-status-success/20 text-status-success",
-  danger: "bg-status-danger/20 text-status-danger",
-  info: "bg-status-info/20 text-status-info",
-  warning: "bg-status-warning/20 text-status-warning",
-  purple: "bg-status-purple/20 text-status-purple",
+  success: "bg-status-success text-white",
+  danger: "bg-status-danger text-white",
+  info: "bg-status-info text-white",
+  warning: "bg-status-warning text-white",
+  purple: "bg-status-purple text-white",
 };
+
+export const STATUS_DOT_COLORS: Record<StatusColor, string> = {
+  success: "bg-status-success",
+  danger: "bg-status-danger",
+  info: "bg-status-info",
+  warning: "bg-status-warning",
+  purple: "bg-status-purple",
+};
+
+
+
+// ============================================
+// Finance Types
+// ============================================
+
+export interface Donation {
+  donation_id: number;
+  donor_id: number;
+  mode: string;
+  amount: number;
+  date: string;
+  donor_name: string;
+  contact_num: string;
+}
+
+export interface Revenue {
+  revenue_id: number;
+  buyer_id: number;
+  mode: string;
+  amount: number;
+  date: string;
+  remarks: string;
+  buyer_name: string;
+  contact_num: string;
+}
+
+export interface Transaction {
+  transaction_id: number;
+  mode: string;
+  amount: number;
+  bill_for: string;
+  date: string;
+  remarks: string;
+}
 
 // ============================================
 // API Response Types

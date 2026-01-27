@@ -1,0 +1,113 @@
+"use client";
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import axios from "axios";
+import { Revenue } from "@/lib/types";
+
+interface EditRevenueDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  revenue?: Revenue | null;
+  onEdit?: () => void;
+}
+
+export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit }: EditRevenueDialogProps) => {
+  const [formData, setFormData] = useState({ name: "", contactNo: "", mode: "", amount: "", remarks: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (revenue) {
+      setFormData({
+        name: revenue.buyer_name || "",
+        contactNo: revenue.contact_num || "",
+        mode: revenue.mode || "",
+        amount: String(revenue.amount || ""),
+        remarks: revenue.remarks || "",
+      });
+    }
+  }, [revenue]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting || !revenue) return;
+    setIsSubmitting(true);
+    try {
+      await axios.patch("/api/revenue/update", {
+        revenue_id: revenue.revenue_id,
+        name: formData.name,
+        contact_num: formData.contactNo,
+        mode: formData.mode,
+        amount: formData.amount,
+        remarks: formData.remarks,
+      });
+      onEdit?.();
+      toast.success("Revenue updated successfully");
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Failed to update revenue");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogHeader>
+          <button onClick={() => onOpenChange(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground z-50">
+            <X className="h-5 w-5" />
+          </button>
+          <DialogTitle className="text-3xl font-bold">Edit Revenue</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-muted border-border" required />
+            </div>
+            <div className="space-y-2">
+              <Label>Contact No.</Label>
+              <Input value={formData.contactNo} onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })} className="bg-muted border-border" required />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Mode</Label>
+              <Select value={formData.mode} onValueChange={(v) => setFormData({ ...formData, mode: v })} required>
+                <SelectTrigger className="bg-muted border-border"><SelectValue placeholder="Select mode" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Online">Online</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount</Label>
+              <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="bg-muted border-border" required />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Remarks</Label>
+            <Textarea value={formData.remarks} onChange={(e) => setFormData({ ...formData, remarks: e.target.value })} className="bg-muted border-border min-h-[150px]" />
+          </div>
+          <div className="flex gap-4 justify-end">
+            <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default EditRevenueDialog;

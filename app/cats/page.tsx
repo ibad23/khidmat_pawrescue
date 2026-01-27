@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Filter, RotateCcw, MoreVertical } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical, ChevronLeft, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
 import { AddCatDialog } from "@/components/dialogs/AddCatDialog";
+import { EditCatDialog } from "@/components/dialogs/EditCatDialog";
+import { DeleteCatDialog } from "@/components/dialogs/DeleteCatDialog";
 import {
   Select,
   SelectContent,
@@ -20,60 +22,184 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { formatCatId, formatCageNo, mapStatusToColor } from "@/lib/utils";
-import { STATUS_COLORS, Cat } from "@/lib/types";
+import { STATUS_COLORS, STATUS_DOT_COLORS, Cat } from "@/lib/types";
+import { toast } from "sonner";
+
+const ITEMS_PER_PAGE = 15;
+
+interface CatRaw {
+  cat_id: number;
+  cat_name: string;
+  age: number | null;
+  gender: string;
+  type: string;
+  cage_id: number | null;
+  status: string;
+  admitted_on: string | null;
+  cage: { cage_id: number; cage_no: number } | null;
+  externals: {
+    external_id: number;
+    name: string;
+    contact_num: string;
+    address: string;
+  } | null;
+}
+
+interface CatForEdit {
+  cat_id: number;
+  cat_name: string;
+  age: number | null;
+  gender: string;
+  type: string;
+  cage_id: number | null;
+  cage_no: number | null;
+  status: string;
+  owner_name: string;
+  contact_num: string;
+  address: string;
+}
 
 export default function CatsPage() {
   const router = useRouter();
   const [cats, setCats] = useState<Cat[]>([]);
+  const [catsRaw, setCatsRaw] = useState<CatRaw[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedCat, setSelectedCat] = useState<CatForEdit | null>(null);
+  const [selectedCatForDelete, setSelectedCatForDelete] = useState<{ id: string; name: string; cat_id: number } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusOptions, setStatusOptions] = useState<string[]>([]);
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get("/api/cats/read");
-        const rows = res.data?.data || [];
-        const mapped: Cat[] = rows.map((r: any) => ({
-          id: formatCatId(r.cat_id),
-          cat_id: r.cat_id,
-          name: r.cat_name || "",
-          owner: r.externals?.name || "",
-          contact: r.externals?.contact_num || "",
-          date: r.admitted_on ? new Date(r.admitted_on).toLocaleDateString() : "",
-          admitted_on_raw: r.admitted_on || null,
-          type: r.type || "",
-          cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no) : "-",
-          status: r.status || "",
-          color: mapStatusToColor(r.status),
-        }));
-        setCats(mapped);
-      } catch (err) {
-        console.error("Failed to load cats", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadCats = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [catsRes, statusRes] = await Promise.all([
+        axios.get("/api/cats/read"),
+        axios.get("/api/cats/statuses"),
+      ]);
+      const rows: CatRaw[] = catsRes.data?.data || [];
+      setCatsRaw(rows);
+      const mapped: Cat[] = rows.map((r) => ({
+        id: formatCatId(r.cat_id),
+        cat_id: r.cat_id,
+        name: r.cat_name || "",
+        owner: r.externals?.name || "",
+        contact: r.externals?.contact_num || "",
+        date: r.admitted_on ? new Date(r.admitted_on).toLocaleDateString() : "",
+        admitted_on_raw: r.admitted_on || null,
+        type: r.type || "",
+        cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no) : "-",
+        status: r.status || "",
+        color: mapStatusToColor(r.status),
+      }));
+      setCats(mapped);
+      setStatusOptions(statusRes.data?.data || []);
+    } catch (err) {
+      console.error("Failed to load cats", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadCats();
+  }, [loadCats]);
+
   const handleAddCat = () => {
-    // Reload the list after adding
-    window.location.reload();
+    loadCats();
   };
 
-  const statusOptions = useMemo(() => {
-    const s = new Set<string>();
-    cats.forEach((c) => { if (c.status) s.add(c.status); });
-    return Array.from(s);
-  }, [cats]);
+  const handleEditCat = (cat: Cat) => {
+    const raw = catsRaw.find((r) => r.cat_id === cat.cat_id);
+    if (raw) {
+      setSelectedCat({
+        cat_id: raw.cat_id,
+        cat_name: raw.cat_name,
+        age: raw.age,
+        gender: raw.gender,
+        type: raw.type,
+        cage_id: raw.cage_id,
+        cage_no: raw.cage?.cage_no || null,
+        status: raw.status,
+        owner_name: raw.externals?.name || "",
+        contact_num: raw.externals?.contact_num || "",
+        address: raw.externals?.address || "",
+      });
+      setShowEditDialog(true);
+    }
+  };
+
+  const handleEditSubmit = () => {
+    loadCats();
+  };
+
+  const handleDeleteCat = (cat: Cat) => {
+    setSelectedCatForDelete({ id: cat.id, name: cat.name, cat_id: cat.cat_id });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedCatForDelete) return;
+    setIsDeleting(true);
+    try {
+      await axios.delete("/api/cats/delete", {
+        data: { cat_id: selectedCatForDelete.cat_id },
+      });
+      toast.success("Cat deleted successfully");
+      loadCats();
+      setShowDeleteDialog(false);
+      setSelectedCatForDelete(null);
+    } catch (err: any) {
+      console.error("Failed to delete cat", err);
+      toast.error(err?.response?.data?.error || "Failed to delete cat");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleStatusChange = async (cat: Cat, newStatus: string) => {
+    if (updatingStatus) return;
+    setUpdatingStatus(cat.cat_id);
+    try {
+      await axios.patch("/api/cats/update", {
+        cat_id: cat.cat_id,
+        status: newStatus,
+      });
+      toast.success("Status updated");
+      // Update local state immediately
+      setCats((prev) =>
+        prev.map((c) =>
+          c.cat_id === cat.cat_id
+            ? { ...c, status: newStatus, color: mapStatusToColor(newStatus) }
+            : c
+        )
+      );
+      setCatsRaw((prev) =>
+        prev.map((c) =>
+          c.cat_id === cat.cat_id
+            ? { ...c, status: newStatus }
+            : c
+        )
+      );
+    } catch (err: any) {
+      console.error("Failed to update status", err);
+      toast.error(err?.response?.data?.error || "Failed to update status");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const ownerOptions = useMemo(() => {
     const s = new Set<string>();
@@ -81,34 +207,75 @@ export default function CatsPage() {
     return Array.from(s);
   }, [cats]);
 
-  const filteredCats = cats.filter((cat) => {
-    if (statusFilter && statusFilter !== "all" && cat.status !== statusFilter) return false;
-    if (ownerFilter && ownerFilter !== "all" && cat.owner !== ownerFilter) return false;
+  const filteredCats = useMemo(() => {
+    return cats.filter((cat) => {
+      if (statusFilter && statusFilter !== "all" && cat.status !== statusFilter) return false;
+      if (ownerFilter && ownerFilter !== "all" && cat.owner !== ownerFilter) return false;
 
-    if (dateFilter) {
-      const raw = cat.admitted_on_raw;
-      if (!raw) return false;
-      const admitted = new Date(raw);
-      const now = new Date();
+      if (dateFilter) {
+        const raw = cat.admitted_on_raw;
+        if (!raw) return false;
+        const admitted = new Date(raw);
+        const now = new Date();
 
-      if (dateFilter === "today") {
-        if (!(now.getFullYear() === admitted.getFullYear() && now.getMonth() === admitted.getMonth() && now.getDate() === admitted.getDate())) return false;
-      } else if (dateFilter === "week") {
-        const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
-        if (diffDays > 7) return false;
-      } else if (dateFilter === "month") {
-        const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
-        if (diffDays > 30) return false;
+        if (dateFilter === "today") {
+          if (!(now.getFullYear() === admitted.getFullYear() && now.getMonth() === admitted.getMonth() && now.getDate() === admitted.getDate())) return false;
+        } else if (dateFilter === "week") {
+          const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
+          if (diffDays > 7) return false;
+        } else if (dateFilter === "month") {
+          const diffDays = (now.getTime() - admitted.getTime()) / (1000 * 60 * 60 * 24);
+          if (diffDays > 30) return false;
+        }
       }
-    }
 
-    return true;
-  });
+      return true;
+    });
+  }, [cats, statusFilter, ownerFilter, dateFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCats.length / ITEMS_PER_PAGE);
+  const paginatedCats = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCats.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredCats, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter, statusFilter, ownerFilter]);
 
   const handleResetFilter = () => {
     setDateFilter("");
     setStatusFilter("all");
     setOwnerFilter("all");
+    setCurrentPage(1);
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) pages.push("...");
+      if (!pages.includes(totalPages)) pages.push(totalPages);
+    }
+    return pages;
   };
 
   return (
@@ -134,9 +301,7 @@ export default function CatsPage() {
               <Filter className="w-5 h-5" />
             </Button>
 
-            <Button variant="outline" className="gap-2">
-              Filter By
-            </Button>
+            <span className="text-sm text-muted-foreground">Filter By</span>
 
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-[180px]">
@@ -174,8 +339,8 @@ export default function CatsPage() {
             </Select>
 
             <Button
-              variant="ghost"
-              className="gap-2 text-primary hover:bg-[hsl(var(--hover-light-yellow))]"
+              variant="outline"
+              className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={handleResetFilter}
             >
               <RotateCcw className="w-4 h-4" />
@@ -214,35 +379,79 @@ export default function CatsPage() {
                     <td className="py-4 px-4"><Skeleton className="h-8 w-8 rounded" /></td>
                   </tr>
                 ))
+              ) : paginatedCats.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                    No cats found.
+                  </td>
+                </tr>
               ) : (
-                filteredCats.map((cat) => (
+                paginatedCats.map((cat) => (
                   <tr
                     key={cat.id}
-                    className="border-b border-border hover:bg-card/50 cursor-pointer"
+                    className="border-b border-border hover:bg-card/50 cursor-pointer group transition-colors"
                     onClick={() => router.push(`/cats/${cat.id}`)}
                   >
-                    <td className="py-4 px-4 text-foreground">{cat.id}</td>
+                    <td className="py-4 px-4 text-foreground font-medium">{cat.id}</td>
                     <td className="py-4 px-4 text-foreground">{cat.name}</td>
                     <td className="py-4 px-4 text-foreground">{cat.owner}</td>
                     <td className="py-4 px-4 text-foreground">{cat.contact}</td>
                     <td className="py-4 px-4 text-foreground">{cat.date}</td>
                     <td className="py-4 px-4 text-foreground">{cat.type}</td>
                     <td className="py-4 px-4 text-foreground">{cat.cage}</td>
-                    <td className="py-4 px-4">
-                      <Badge className={STATUS_COLORS[cat.color]}>{cat.status}</Badge>
-                    </td>
-                    <td className="py-4 px-4">
+                    <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="inline-flex items-center gap-1 focus:outline-none"
+                            disabled={updatingStatus === cat.cat_id}
+                          >
+                            <Badge className={`${STATUS_COLORS[cat.color]} ${updatingStatus === cat.cat_id ? "opacity-50" : ""}`}>
+                              {cat.status}
+                              <ChevronDown className="w-3 h-3 ml-1" />
+                            </Badge>
+                          </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                        <DropdownMenuContent align="start">
+                          {statusOptions.map((s) => {
+                            const itemColor = mapStatusToColor(s);
+                            return (
+                              <DropdownMenuItem
+                                key={s}
+                                onClick={() => handleStatusChange(cat, s)}
+                                className={s === cat.status ? "bg-accent" : ""}
+                              >
+                                <span className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[itemColor]} mr-2`} />
+                                {s}
+                              </DropdownMenuItem>
+                            );
+                          })}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditCat(cat); }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -250,9 +459,64 @@ export default function CatsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredCats.length)} of {filteredCats.length} cats
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {getPageNumbers().map((page, index) => (
+                typeof page === "number" ? (
+                  <Button
+                    key={index}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className={`h-8 w-8 ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
+                  >
+                    {page}
+                  </Button>
+                ) : (
+                  <span key={index} className="px-2 text-muted-foreground">...</span>
+                )
+              ))}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <AddCatDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddCat} />
+      <EditCatDialog open={showEditDialog} onOpenChange={setShowEditDialog} cat={selectedCat} onEdit={handleEditSubmit} />
+      <DeleteCatDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        catName={selectedCatForDelete?.name || ""}
+        catId={selectedCatForDelete?.id || ""}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </DashboardLayout>
   );
 }
