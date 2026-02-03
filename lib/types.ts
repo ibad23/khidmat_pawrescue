@@ -50,7 +50,18 @@ export interface Cage {
   status: string;
 }
 
+export interface CageDetail {
+  cage_id: number;
+  cage_no: number;
+  ward_id: number;
+  cage_status: string;
+  date: string | null;
+  cat_id: number | null;
+  cat_name: string | null;
+}
+
 export interface Ward {
+  ward_id: number;
   name: string;
   code: string;
   totalCages: number;

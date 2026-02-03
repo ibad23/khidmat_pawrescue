@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Filter, RotateCcw, MoreVertical, Download } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -32,6 +32,8 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Donation, Revenue, Transaction } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
+import { usePagination } from "@/hooks/usePagination";
 
 function mapDonation(d: any): Donation {
   return {
@@ -145,6 +147,22 @@ const FinancesPage = () => {
     return true;
   });
 
+  // Pagination for each table
+  const donationsPagination = usePagination(filteredDonations, {
+    itemsPerPage: 15,
+    resetDeps: [donationFilters.date, donationFilters.mode],
+  });
+
+  const revenuePagination = usePagination(filteredRevenue, {
+    itemsPerPage: 15,
+    resetDeps: [revenueFilters.date, revenueFilters.mode],
+  });
+
+  const transactionsPagination = usePagination(filteredTransactions, {
+    itemsPerPage: 15,
+    resetDeps: [transactionFilters.date, transactionFilters.mode],
+  });
+
   const totalDonations = donations.reduce((s, d) => s + d.amount, 0);
   const totalRevenue = revenue.reduce((s, r) => s + r.amount, 0);
   const totalTransactions = transactions.reduce((s, t) => s + t.amount, 0);
@@ -193,7 +211,6 @@ const FinancesPage = () => {
   };
 
   const formatAmount = (n: number) => n.toLocaleString() + " PKR";
-  const formatDate = (d: string) => new Date(d).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" });
   const formatContact = (c: string) => {
     const digits = c.replace(/\D/g, "");
     return digits.length > 4 ? digits.slice(0, 4) + "-" + digits.slice(4) : digits;
@@ -291,7 +308,7 @@ const FinancesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {loadingDonations ? <SkeletonRows cols={7} /> : filteredDonations.map((d) => (
+                  {loadingDonations ? <SkeletonRows cols={7} /> : donationsPagination.paginatedItems.map((d) => (
                     <tr key={d.donation_id} className="border-b border-border hover:bg-card/50">
                       <td className="py-4 px-4 text-foreground">D-{String(d.donation_id).padStart(4, "0")}</td>
                       <td className="py-4 px-4 text-foreground">{d.donor_name}</td>
@@ -313,6 +330,30 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
+            {!loadingDonations && donationsPagination.totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {donationsPagination.startIndex} to {donationsPagination.endIndex} of {filteredDonations.length} donations
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" onClick={() => donationsPagination.goToPage(donationsPagination.currentPage - 1)} disabled={donationsPagination.currentPage === 1} className="h-8 w-8">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {donationsPagination.getPageNumbers().map((page, index) => (
+                    typeof page === "number" ? (
+                      <Button key={index} variant={donationsPagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => donationsPagination.goToPage(page)} className={`h-8 w-8 ${donationsPagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
+                        {page}
+                      </Button>
+                    ) : (
+                      <span key={index} className="px-2 text-muted-foreground">...</span>
+                    )
+                  ))}
+                  <Button variant="outline" size="icon" onClick={() => donationsPagination.goToPage(donationsPagination.currentPage + 1)} disabled={donationsPagination.currentPage === donationsPagination.totalPages} className="h-8 w-8">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* REVENUE TAB */}
@@ -365,7 +406,7 @@ const FinancesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {loadingRevenue ? <SkeletonRows cols={8} /> : filteredRevenue.map((r) => (
+                  {loadingRevenue ? <SkeletonRows cols={8} /> : revenuePagination.paginatedItems.map((r) => (
                     <tr key={r.revenue_id} className="border-b border-border hover:bg-card/50">
                       <td className="py-4 px-4 text-foreground">R-{String(r.revenue_id).padStart(4, "0")}</td>
                       <td className="py-4 px-4 text-foreground">{r.buyer_name}</td>
@@ -388,6 +429,30 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
+            {!loadingRevenue && revenuePagination.totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {revenuePagination.startIndex} to {revenuePagination.endIndex} of {filteredRevenue.length} revenue entries
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" onClick={() => revenuePagination.goToPage(revenuePagination.currentPage - 1)} disabled={revenuePagination.currentPage === 1} className="h-8 w-8">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {revenuePagination.getPageNumbers().map((page, index) => (
+                    typeof page === "number" ? (
+                      <Button key={index} variant={revenuePagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => revenuePagination.goToPage(page)} className={`h-8 w-8 ${revenuePagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
+                        {page}
+                      </Button>
+                    ) : (
+                      <span key={index} className="px-2 text-muted-foreground">...</span>
+                    )
+                  ))}
+                  <Button variant="outline" size="icon" onClick={() => revenuePagination.goToPage(revenuePagination.currentPage + 1)} disabled={revenuePagination.currentPage === revenuePagination.totalPages} className="h-8 w-8">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* TRANSACTIONS TAB */}
@@ -439,7 +504,7 @@ const FinancesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {loadingTransactions ? <SkeletonRows cols={7} /> : filteredTransactions.map((t) => (
+                  {loadingTransactions ? <SkeletonRows cols={7} /> : transactionsPagination.paginatedItems.map((t) => (
                     <tr key={t.transaction_id} className="border-b border-border hover:bg-card/50">
                       <td className="py-4 px-4 text-foreground">T-{String(t.transaction_id).padStart(4, "0")}</td>
                       <td className="py-4 px-4 text-foreground">{t.bill_for}</td>
@@ -461,6 +526,30 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
+            {!loadingTransactions && transactionsPagination.totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {transactionsPagination.startIndex} to {transactionsPagination.endIndex} of {filteredTransactions.length} transactions
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" onClick={() => transactionsPagination.goToPage(transactionsPagination.currentPage - 1)} disabled={transactionsPagination.currentPage === 1} className="h-8 w-8">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {transactionsPagination.getPageNumbers().map((page, index) => (
+                    typeof page === "number" ? (
+                      <Button key={index} variant={transactionsPagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => transactionsPagination.goToPage(page)} className={`h-8 w-8 ${transactionsPagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
+                        {page}
+                      </Button>
+                    ) : (
+                      <span key={index} className="px-2 text-muted-foreground">...</span>
+                    )
+                  ))}
+                  <Button variant="outline" size="icon" onClick={() => transactionsPagination.goToPage(transactionsPagination.currentPage + 1)} disabled={transactionsPagination.currentPage === transactionsPagination.totalPages} className="h-8 w-8">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

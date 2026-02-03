@@ -6,8 +6,16 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { User } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+const getInitials = (name: string): string => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -106,15 +114,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 ) : (
                   <>
                     <Avatar className="w-8 h-8">
-                      {profile?.name ? (
-                        <AvatarImage src={
-                          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.name)}`
-                        } />
-                      ) : (
-                        <></>
-                      )}
-                      <AvatarFallback>
-                        <User className="w-4 h-4" />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                        {profile?.name ? getInitials(profile.name) : "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">

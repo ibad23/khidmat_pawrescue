@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -93,12 +92,6 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-md">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-5 w-5" />
-        </button>
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Add New Team Member</DialogTitle>
         </DialogHeader>

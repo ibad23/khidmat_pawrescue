@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,55 +19,84 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { AddWardDialog } from "@/components/dialogs/AddWardDialog";
 import { EditWardDialog } from "@/components/dialogs/EditWardDialog";
 import { DeleteWardDialog } from "@/components/dialogs/DeleteWardDialog";
-
-const initialWardsData = [
-  { name: "General Ward", code: "GW", totalCages: 10, freeCages: 5 },
-  { name: "ICU", code: "ICU", totalCages: 10, freeCages: 5 },
-  { name: "Lounge", code: "LG", totalCages: 10, freeCages: 5 },
-  { name: "Recovery", code: "RC", totalCages: 10, freeCages: 5 },
-  { name: "Quarantine", code: "QT", totalCages: 10, freeCages: 5 },
-];
+import type { Ward } from "@/lib/types";
 
 export default function WardsPage() {
   const router = useRouter();
-  const [wards, setWards] = useState(initialWardsData);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedWard, setSelectedWard] = useState<any>(null);
+  const [selectedWard, setSelectedWard] = useState<Ward | null>(null);
   const [wardFilter, setWardFilter] = useState("");
 
-  const filteredWards = wards.filter((ward) => {
-    if (wardFilter && wardFilter !== "all" && ward.name !== wardFilter) return false;
-    return true;
-  });
+  const loadWards = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/api/wards/read");
+      const data = res.data?.data || [];
+      setWards(data);
+    } catch (err) {
+      console.error("Failed to load wards", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadWards();
+  }, [loadWards]);
+
+  // Refetch data when window regains focus (e.g., user comes back from another page)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadWards();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loadWards]);
+
+  const filteredWards = useMemo(() => {
+    return wards.filter((ward) => {
+      if (wardFilter && wardFilter !== "all" && ward.name !== wardFilter) return false;
+      return true;
+    });
+  }, [wards, wardFilter]);
 
   const handleResetFilter = () => {
     setWardFilter("");
   };
 
-  const handleEdit = (e: React.MouseEvent, ward: any) => {
+  const handleEdit = (e: React.MouseEvent, ward: Ward) => {
     e.stopPropagation();
     setSelectedWard(ward);
     setShowEditDialog(true);
   };
 
-  const handleEditSubmit = (updatedWard: any) => {
-    setWards(wards.map((w) => (w === selectedWard ? updatedWard : w)));
+  const handleEditSubmit = (updatedWard: Ward) => {
+    setWards((prev) =>
+      prev.map((w) => (w.ward_id === updatedWard.ward_id ? updatedWard : w))
+    );
   };
 
-  const handleDelete = (e: React.MouseEvent, ward: any) => {
+  const handleDelete = (e: React.MouseEvent, ward: Ward) => {
     e.stopPropagation();
     setSelectedWard(ward);
     setShowDeleteDialog(true);
   };
 
-  const handleAddWard = (newWard: any) => {
-    setWards([...wards, newWard]);
+  const handleDeleteConfirm = (wardId: number) => {
+    setWards((prev) => prev.filter((w) => w.ward_id !== wardId));
+  };
+
+  const handleAddWard = (newWard: Ward) => {
+    setWards((prev) => [...prev, newWard]);
   };
 
   return (
@@ -88,9 +118,7 @@ export default function WardsPage() {
               <Filter className="w-5 h-5" />
             </Button>
 
-            <Button variant="outline" className="gap-2">
-              Filter By
-            </Button>
+            <span className="text-sm text-muted-foreground">Filter By</span>
 
             <Select value={wardFilter} onValueChange={setWardFilter}>
               <SelectTrigger className="w-[180px]">
@@ -98,15 +126,19 @@ export default function WardsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Wards</SelectItem>
-                <SelectItem value="General Ward">General Ward</SelectItem>
-                <SelectItem value="ICU">ICU</SelectItem>
-                <SelectItem value="Lounge">Lounge</SelectItem>
-                <SelectItem value="Recovery">Recovery</SelectItem>
-                <SelectItem value="Quarantine">Quarantine</SelectItem>
+                {wards.map((ward) => (
+                  <SelectItem key={ward.ward_id} value={ward.name}>
+                    {ward.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors" onClick={handleResetFilter}>
+            <Button
+              variant="outline"
+              className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
+              onClick={handleResetFilter}
+            >
               <RotateCcw className="w-4 h-4" />
               Reset Filter
             </Button>
@@ -114,52 +146,74 @@ export default function WardsPage() {
         </Card>
 
         <div className="space-y-4">
-          {filteredWards.map((ward, index) => (
-            <Card
-              key={index}
-              className="bg-card border-border p-6 cursor-pointer hover:bg-card/80 transition-colors"
-              onClick={() => router.push(`/wards/${ward.name.toLowerCase().replace(/\s+/g, '-')}`)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                  <h3 className="text-xl font-semibold text-foreground min-w-[200px]">{ward.name}</h3>
-                  <div className="flex items-center gap-8 text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Code:</span>
-                      <span className="text-muted-foreground">{ward.code}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Total Cages:</span>
-                      <span className="text-muted-foreground">{ward.totalCages}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Free Cages:</span>
-                      <span className="text-muted-foreground">{ward.freeCages}</span>
+          {loading ? (
+            [...Array(4)].map((_, i) => (
+              <Card key={i} className="bg-card border-border p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-8">
+                    <Skeleton className="h-6 w-40" />
+                    <div className="flex items-center gap-8">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-4 w-24" />
                     </div>
                   </div>
+                  <Skeleton className="h-8 w-8 rounded" />
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e: any) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e: any) => handleEdit(e, ward)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive" onClick={(e: any) => handleDelete(e, ward)}>
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              </Card>
+            ))
+          ) : filteredWards.length === 0 ? (
+            <Card className="bg-card border-border p-8 text-center text-muted-foreground">
+              No wards found.
             </Card>
-          ))}
+          ) : (
+            filteredWards.map((ward) => (
+              <Card
+                key={ward.ward_id}
+                className="bg-card border-border p-6 cursor-pointer hover:bg-card/80 transition-colors"
+                onClick={() => router.push(`/wards/${ward.ward_id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-8">
+                    <h3 className="text-xl font-semibold text-foreground min-w-[200px]">{ward.name}</h3>
+                    <div className="flex items-center gap-8 text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Code:</span>
+                        <span className="text-muted-foreground">{ward.code}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Total Cages:</span>
+                        <span className="text-muted-foreground">{ward.totalCages}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Free Cages:</span>
+                        <span className="text-muted-foreground">{ward.freeCages}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="w-5 h-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e: React.MouseEvent<HTMLDivElement>) => handleEdit(e, ward)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={(e: React.MouseEvent<HTMLDivElement>) => handleDelete(e, ward)}>
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </div>
 
       <AddWardDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddWard} />
       <EditWardDialog open={showEditDialog} onOpenChange={setShowEditDialog} ward={selectedWard} onEdit={handleEditSubmit} />
-      <DeleteWardDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} />
+      <DeleteWardDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} ward={selectedWard} onDelete={handleDeleteConfirm} />
     </DashboardLayout>
   );
 }

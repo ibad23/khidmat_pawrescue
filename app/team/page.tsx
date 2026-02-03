@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import {
@@ -74,7 +74,9 @@ export default function TeamPage() {
     setIsDeleting(true);
     try {
       const currentUserEmail = user?.email || "";
-      await axios.delete(`/api/team/delete?id=${selectedMember.id}&currentUserEmail=${encodeURIComponent(currentUserEmail)}`);
+      await axios.delete("/api/team/delete", {
+        data: { id: selectedMember.id, currentUserEmail }
+      });
       setTeamMembers((prev) => prev.filter((m) => m.id !== selectedMember.id));
       toast.success("Team member deleted successfully");
       setShowDeleteDialog(false);
@@ -153,10 +155,7 @@ export default function TeamPage() {
                   </DropdownMenu>
 
                   <Avatar className="w-24 h-24 mb-4">
-                    <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`}
-                    />
-                    <AvatarFallback className="text-xl">
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary font-semibold">
                       {getInitials(member.name)}
                     </AvatarFallback>
                   </Avatar>

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -36,6 +35,13 @@ export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit }: Edi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !donation) return;
+
+    const amount = Number(formData.amount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error("Amount cannot be negative");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await axios.patch("/api/donations/update", {
@@ -59,9 +65,6 @@ export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit }: Edi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
-          <button onClick={() => onOpenChange(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground z-50">
-            <X className="h-5 w-5" />
-          </button>
           <DialogTitle className="text-3xl font-bold">Edit Donation</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -85,7 +88,7 @@ export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit }: Edi
           </div>
           <div className="space-y-2">
             <Label>Amount</Label>
-            <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="bg-muted border-border" required />
+            <Input type="number" min="0" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="bg-muted border-border" required />
           </div>
           <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>Cancel</Button>

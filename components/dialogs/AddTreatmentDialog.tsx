@@ -245,7 +245,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
                 type="button"
                 size="icon"
                 className="bg-primary hover:bg-primary/90 h-10 w-10"
-                onClick={() => setTemp(temp + 1)}
+                onClick={() => setTemp(Math.min(115, temp + 1))}
               >
                 <Plus className="h-4 w-4" />
               </Button>

@@ -14,10 +14,11 @@ export function formatCatId(catId: number): string {
 }
 
 /**
- * Format a cage number to display format (e.g., 1 -> "GW-C1")
+ * Format a cage number to display format (e.g., 1 -> "GW-C01")
  */
-export function formatCageNo(cageNo: number): string {
-  return `GW-C${cageNo}`;
+export function formatCageNo(cageNo: number, wardCode?: string): string {
+  const code = wardCode || "GW";
+  return `${code}-C${String(cageNo).padStart(2, "0")}`;
 }
 
 /**
@@ -26,6 +27,33 @@ export function formatCageNo(cageNo: number): string {
 export function formatForDatetimeLocal(date: Date): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * Format a date string for display (e.g., "14 Feb 2024")
+ */
+export function formatDate(dateString: string | Date): string {
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  return date.toLocaleDateString("en-PK", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
+ * Format a datetime string for display (e.g., "14 Feb 2024, 2:30 PM")
+ */
+export function formatDateTime(dateString: string | Date): string {
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  return date.toLocaleString("en-PK", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 /**

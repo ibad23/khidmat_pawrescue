@@ -23,10 +23,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCatId } from "@/lib/utils";
+import { formatCatId, formatDateTime } from "@/lib/utils";
 import { Treatment } from "@/lib/types";
-
-const ITEMS_PER_PAGE = 15;
+import { usePagination } from "@/hooks/usePagination";
 
 export default function TreatmentsPage() {
   const [treatments, setTreatments] = useState<Treatment[]>([]);
@@ -36,7 +35,6 @@ export default function TreatmentsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null);
   const [catFilter, setCatFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const loadTreatments = useCallback(async () => {
     try {
@@ -51,7 +49,7 @@ export default function TreatmentsPage() {
         cageNo: r.cats?.cage?.cage_no || r.cats?.cage_no || "",
         temp: r.temperature || "",
         treatment: r.treatment || "",
-        time: r.date_time ? new Date(r.date_time).toLocaleString() : "",
+        time: r.date_time ? formatDateTime(r.date_time) : "",
         givenBy: r.users?.user_name || (r.user_id ? `User ${r.user_id}` : "")
       }));
       setTreatments(mapped);
@@ -115,47 +113,22 @@ export default function TreatmentsPage() {
     });
   }, [treatments, catFilter]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredTreatments.length / ITEMS_PER_PAGE);
-  const paginatedTreatments = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTreatments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredTreatments, currentPage]);
-
-  // Reset to page 1 when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [catFilter]);
+  // Pagination
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedTreatments,
+    goToPage,
+    getPageNumbers,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredTreatments, {
+    itemsPerPage: 15,
+    resetDeps: [catFilter],
+  });
 
   const handleResetFilter = () => {
     setCatFilter("all");
-    setCurrentPage(1);
-  };
-
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
-        if (!pages.includes(i)) pages.push(i);
-      }
-
-      if (currentPage < totalPages - 2) pages.push("...");
-      if (!pages.includes(totalPages)) pages.push(totalPages);
-    }
-    return pages;
   };
 
   useEffect(() => {
@@ -278,7 +251,7 @@ export default function TreatmentsPage() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredTreatments.length)} of {filteredTreatments.length} treatments
+              Showing {startIndex} to {endIndex} of {filteredTreatments.length} treatments
             </p>
             <div className="flex items-center gap-1">
               <Button

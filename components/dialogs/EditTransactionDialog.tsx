@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -37,6 +36,13 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !transaction) return;
+
+    const amount = Number(formData.amount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error("Amount cannot be negative");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await axios.patch("/api/transactions/update", {
@@ -60,9 +66,6 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
-          <button onClick={() => onOpenChange(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground z-50">
-            <X className="h-5 w-5" />
-          </button>
           <DialogTitle className="text-3xl font-bold">Edit Transaction</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -83,7 +86,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit 
             </div>
             <div className="space-y-2">
               <Label>Amount</Label>
-              <Input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="bg-muted border-border" required />
+              <Input type="number" min="0" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} className="bg-muted border-border" required />
             </div>
           </div>
           <div className="space-y-2">

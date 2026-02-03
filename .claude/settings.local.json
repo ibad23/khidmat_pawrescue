@@ -3,7 +3,13 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(npx tsc --noEmit)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pgrep:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npx next lint:*)",
+      "Bash(npx next build)"
     ]
   }
 }

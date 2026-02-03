@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -29,6 +28,13 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    const amount = Number(formData.amount);
+    if (isNaN(amount) || amount < 0) {
+      toast.error("Amount cannot be negative");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await axios.post("/api/transactions/create", {
@@ -52,12 +58,6 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground z-50"
-          >
-            <X className="h-5 w-5" />
-          </button>
           <DialogTitle className="text-3xl font-bold">Add New Transaction</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -89,6 +89,7 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
               <Label>Amount</Label>
               <Input
                 type="number"
+                min="0"
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 placeholder="Enter amount"

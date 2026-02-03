@@ -265,7 +265,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
                 type="button"
                 size="icon"
                 className="bg-primary hover:bg-primary/90 h-10 w-10"
-                onClick={() => setFormData({ ...formData, temp: formData.temp + 1 })}
+                onClick={() => setFormData({ ...formData, temp: Math.min(115, formData.temp + 1) })}
               >
                 <Plus className="h-4 w-4" />
               </Button>

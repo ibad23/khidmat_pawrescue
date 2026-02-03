@@ -3,9 +3,8 @@ import adminClient from "../../adminClient";
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    const currentUserEmail = searchParams.get("currentUserEmail");
+    const body = await request.json();
+    const { id, currentUserEmail } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -62,7 +61,7 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: "User deleted successfully" });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Error deleting team member:", err);
     return NextResponse.json(

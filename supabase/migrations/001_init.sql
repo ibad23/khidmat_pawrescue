@@ -25,18 +25,19 @@ CREATE TYPE mode_enum AS ENUM ('Online','Cash');
 CREATE TYPE gender_enum AS ENUM ('Male','Female');
 CREATE TYPE type_enum AS ENUM ('Pet','Rescued','Stray');
 
+-- Note: All status values use Title Case for consistency
 CREATE TYPE cat_status_enum AS ENUM (
   'Expired',
-  'Move to healthy area',
+  'Move To Healthy Area',
   'Adopted',
   'Discharged',
   'Under Treatment',
-  'Ready to discharge',
+  'Ready To Discharge',
   'Fostered',
-  'Healthy in lower portion',
-  'Under observation',
+  'Healthy In Lower Portion',
+  'Under Observation',
   'Missing',
-  'Ready to move H.A'
+  'Ready To Move H.A'
 );
 
 CREATE TYPE cage_status_enum AS ENUM ('Occupied','Free','Transferred');
@@ -57,7 +58,7 @@ CREATE TABLE internal_role (
 CREATE TABLE users (
   user_id BIGSERIAL PRIMARY KEY,
   user_name TEXT,
-  email TEXT,
+  email TEXT UNIQUE,
   password TEXT,
   internal_role_id BIGINT REFERENCES internal_role(internal_role_id) ON DELETE SET NULL
 );
@@ -80,17 +81,7 @@ CREATE TABLE cage (
 CREATE TABLE cats (
   cat_id BIGSERIAL PRIMARY KEY,
   cat_name TEXT,
-  age NUMERIC(3,2),
-  gender gender_enum,
-  type type_enum,
-  cage_id BIGINT REFERENCES cage(cage_id) ON DELETE SET NULL,
-  external_id BIGINT REFERENCES externals(external_id) ON DELETE SET NULL,
-  status cat_status_enum,
-  admitted_on DATE
-);
-
-CREATE TABLE donations (
-  donation_id BIGSERIAL PRIMARY KEY,
+  age FLOAT,
   donor_id BIGINT REFERENCES externals(external_id) ON DELETE SET NULL,
   mode mode_enum,
   amount INTEGER,

@@ -65,6 +65,14 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (formData.age) {
+      const age = Number(formData.age);
+      if (isNaN(age) || age < 0) {
+        toast.error("Age cannot be negative");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const payload: any = {
@@ -175,6 +183,8 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
               <Label>Age</Label>
               <Input
                 type="number"
+                min="0"
+                step="0.1"
                 placeholder="Age in years"
                 className="bg-muted border-border"
                 required
@@ -218,7 +228,7 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
                 </SelectTrigger>
                 <SelectContent>
                   {cageOptions.map((c) => (
-                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{formatCageNo(c.cage_no)}</SelectItem>
+                    <SelectItem key={c.cage_id} value={String(c.cage_id)}>{formatCageNo(c.cage_no, c.ward_code)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

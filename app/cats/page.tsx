@@ -26,11 +26,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-import { formatCatId, formatCageNo, mapStatusToColor } from "@/lib/utils";
+import { formatCatId, formatCageNo, mapStatusToColor, formatDate } from "@/lib/utils";
 import { STATUS_COLORS, STATUS_DOT_COLORS, Cat } from "@/lib/types";
 import { toast } from "sonner";
-
-const ITEMS_PER_PAGE = 15;
+import { usePagination } from "@/hooks/usePagination";
 
 interface CatRaw {
   cat_id: number;
@@ -78,7 +77,6 @@ export default function CatsPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
 
@@ -97,7 +95,7 @@ export default function CatsPage() {
         name: r.cat_name || "",
         owner: r.externals?.name || "",
         contact: r.externals?.contact_num || "",
-        date: r.admitted_on ? new Date(r.admitted_on).toLocaleDateString() : "",
+        date: r.admitted_on ? formatDate(r.admitted_on) : "",
         admitted_on_raw: r.admitted_on || null,
         type: r.type || "",
         cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no) : "-",
@@ -233,49 +231,24 @@ export default function CatsPage() {
     });
   }, [cats, statusFilter, ownerFilter, dateFilter]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredCats.length / ITEMS_PER_PAGE);
-  const paginatedCats = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredCats.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredCats, currentPage]);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [dateFilter, statusFilter, ownerFilter]);
+  // Pagination
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedCats,
+    goToPage,
+    getPageNumbers,
+    startIndex,
+    endIndex,
+  } = usePagination(filteredCats, {
+    itemsPerPage: 15,
+    resetDeps: [dateFilter, statusFilter, ownerFilter],
+  });
 
   const handleResetFilter = () => {
     setDateFilter("");
     setStatusFilter("all");
     setOwnerFilter("all");
-    setCurrentPage(1);
-  };
-
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
-        if (!pages.includes(i)) pages.push(i);
-      }
-
-      if (currentPage < totalPages - 2) pages.push("...");
-      if (!pages.includes(totalPages)) pages.push(totalPages);
-    }
-    return pages;
   };
 
   return (
@@ -464,7 +437,7 @@ export default function CatsPage() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredCats.length)} of {filteredCats.length} cats
+              Showing {startIndex} to {endIndex} of {filteredCats.length} cats
             </p>
             <div className="flex items-center gap-1">
               <Button
