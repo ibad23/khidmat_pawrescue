@@ -25,9 +25,13 @@ import { AddWardDialog } from "@/components/dialogs/AddWardDialog";
 import { EditWardDialog } from "@/components/dialogs/EditWardDialog";
 import { DeleteWardDialog } from "@/components/dialogs/DeleteWardDialog";
 import type { Ward } from "@/lib/types";
+import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 export default function WardsPage() {
   const router = useRouter();
+  const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const [wards, setWards] = useState<Ward[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -191,19 +195,23 @@ export default function WardsPage() {
                       </div>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="w-5 h-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e: React.MouseEvent<HTMLDivElement>) => handleEdit(e, ward)}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={(e: React.MouseEvent<HTMLDivElement>) => handleDelete(e, ward)}>
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {(canEdit || canDelete) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit && <DropdownMenuItem onClick={(e: React.MouseEvent<HTMLDivElement>) => handleEdit(e, ward)}>Edit</DropdownMenuItem>}
+                        {canDelete && (
+                          <DropdownMenuItem className="text-destructive" onClick={(e: React.MouseEvent<HTMLDivElement>) => handleDelete(e, ward)}>
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </Card>
             ))
@@ -212,8 +220,8 @@ export default function WardsPage() {
       </div>
 
       <AddWardDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddWard} />
-      <EditWardDialog open={showEditDialog} onOpenChange={setShowEditDialog} ward={selectedWard} onEdit={handleEditSubmit} />
-      <DeleteWardDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} ward={selectedWard} onDelete={handleDeleteConfirm} />
+      <EditWardDialog open={showEditDialog} onOpenChange={setShowEditDialog} ward={selectedWard} onEdit={handleEditSubmit} currentUserEmail={user?.email} />
+      <DeleteWardDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} ward={selectedWard} onDelete={handleDeleteConfirm} currentUserEmail={user?.email} />
     </DashboardLayout>
   );
 }

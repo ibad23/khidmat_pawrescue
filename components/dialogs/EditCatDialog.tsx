@@ -37,9 +37,10 @@ interface EditCatDialogProps {
   onOpenChange: (open: boolean) => void;
   cat: CatData | null;
   onEdit?: () => void;
+  currentUserEmail?: string;
 }
 
-export const EditCatDialog = ({ open, onOpenChange, cat, onEdit }: EditCatDialogProps) => {
+export const EditCatDialog = ({ open, onOpenChange, cat, onEdit, currentUserEmail }: EditCatDialogProps) => {
   const [formData, setFormData] = useState({
     catName: "",
     age: "",
@@ -143,6 +144,7 @@ export const EditCatDialog = ({ open, onOpenChange, cat, onEdit }: EditCatDialog
         contact_num: formData.contactNo || null,
         address: formData.address || null,
         old_cage_id: cat.cage_id,
+        currentUserEmail,
       };
 
       const res = await axios.patch("/api/cats/update", payload);

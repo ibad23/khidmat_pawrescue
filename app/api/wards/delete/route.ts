@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import client from "@/app/api/client";
+import { canUserDelete } from "@/lib/permissions";
 
 export async function DELETE(req: Request) {
   try {
     const body = await req.json();
-    const { ward_id } = body;
+    const { ward_id, currentUserEmail } = body;
 
     if (!ward_id) {
       return NextResponse.json({ error: "ward_id is required" }, { status: 400 });
+    }
+
+    // Check permissions
+    if (!currentUserEmail || !(await canUserDelete(currentUserEmail))) {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
     }
 
     // Check if ward has any occupied cages

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import adminClient from "../../adminClient";
+import { canUserEdit } from "@/lib/permissions";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -10,6 +11,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { error: "User ID is required" },
         { status: 400 }
+      );
+    }
+
+    // Check permissions
+    if (!currentUserEmail || !(await canUserEdit(currentUserEmail))) {
+      return NextResponse.json(
+        { error: "Unauthorized: Admin access required" },
+        { status: 403 }
       );
     }
 

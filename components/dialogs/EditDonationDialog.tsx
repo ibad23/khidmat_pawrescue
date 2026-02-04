@@ -15,9 +15,10 @@ interface EditDonationDialogProps {
   onOpenChange: (open: boolean) => void;
   donation?: Donation | null;
   onEdit?: () => void;
+  currentUserEmail?: string;
 }
 
-export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit }: EditDonationDialogProps) => {
+export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit, currentUserEmail }: EditDonationDialogProps) => {
   const [formData, setFormData] = useState({ donorName: "", contactNo: "", mode: "", amount: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,6 +51,7 @@ export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit }: Edi
         contact_num: formData.contactNo,
         mode: formData.mode,
         amount: formData.amount,
+        currentUserEmail,
       });
       onEdit?.();
       toast.success("Donation updated successfully");

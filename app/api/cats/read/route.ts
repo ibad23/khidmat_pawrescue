@@ -17,11 +17,11 @@ export async function GET(req: Request) {
 		const type = url.searchParams.get("type");
 		const search = url.searchParams.get("search");
 
-		// Base query: select cat fields and join cage and externals information
+		// Base query: select cat fields and join cage (with ward) and externals information
 		let query = client
 			.from("cats")
 			.select(
-				`cat_id,cat_name,age,gender,type,cage_id,status,admitted_on,cage(cage_id,cage_no),externals(external_id,name,contact_num,address)`,
+				`cat_id,cat_name,age,gender,type,cage_id,status,admitted_on,cage(cage_id,cage_no,ward(ward_id,code)),externals(external_id,name,contact_num,address)`,
 				{ count: "exact" }
 			);
 

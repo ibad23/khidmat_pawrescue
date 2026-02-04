@@ -15,9 +15,10 @@ interface EditWardDialogProps {
   onOpenChange: (open: boolean) => void;
   ward?: Ward | null;
   onEdit?: (ward: Ward) => void;
+  currentUserEmail?: string;
 }
 
-export const EditWardDialog = ({ open, onOpenChange, ward, onEdit }: EditWardDialogProps) => {
+export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEmail }: EditWardDialogProps) => {
   const [cageCount, setCageCount] = useState(ward?.totalCages || 0);
   const [wardName, setWardName] = useState(ward?.name || "");
   const [cageCode, setCageCode] = useState(ward?.code || "");
@@ -63,6 +64,7 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit }: EditWardDia
         name: wardName.trim(),
         code: cageCode.trim().toUpperCase(),
         totalCages: cageCount,
+        currentUserEmail,
       };
 
       const res = await axios.patch("/api/wards/update", payload);

@@ -16,9 +16,10 @@ interface EditTreatmentDialogProps {
   onOpenChange: (open: boolean) => void;
   treatment?: any;
   onEdit?: (treatment: any) => void;
+  currentUserEmail?: string;
 }
 
-export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: EditTreatmentDialogProps) => {
+export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, currentUserEmail }: EditTreatmentDialogProps) => {
   const [cats, setCats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [catIdSearch, setCatIdSearch] = useState("");
@@ -129,6 +130,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit }: E
         temperature: `${formData.temp}°F`,
         treatment: formData.treatment,
         date_time: dateTimeISO,
+        currentUserEmail,
       };
 
       const resp = await axios.patch('/api/treatments/update', payload);

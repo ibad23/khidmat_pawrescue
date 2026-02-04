@@ -138,6 +138,14 @@ export const STATUS_DOT_COLORS: Record<StatusColor, string> = {
   purple: "bg-status-purple",
 };
 
+export const STATUS_RING_COLORS: Record<StatusColor, string> = {
+  success: "ring-status-success ring-opacity-50",
+  danger: "ring-status-danger ring-opacity-50",
+  info: "ring-status-info ring-opacity-50",
+  warning: "ring-status-warning ring-opacity-50",
+  purple: "ring-status-purple ring-opacity-50",
+};
+
 
 
 // ============================================

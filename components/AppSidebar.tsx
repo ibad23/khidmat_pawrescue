@@ -57,7 +57,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent className="bg-sidebar">
-        
+        {/* Logo Header - matches h-16 of main header */}
+        <div className="h-16 flex items-center justify-center border-b border-border px-2">
+          <Logo className={cn(
+            "transition-all duration-200 object-contain",
+            collapsed ? "w-6 h-6" : "h-8 w-auto"
+          )} />
+        </div>
+
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

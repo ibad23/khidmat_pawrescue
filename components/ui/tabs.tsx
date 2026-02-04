@@ -27,7 +27,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted",
+      "inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-muted",
       "data-[state=active]:bg-transparent data-[state=active]:text-foreground",
       className
     )}
@@ -42,7 +42,14 @@ const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
-  <TabsPrimitive.Content ref={ref} className={cn("mt-2", className)} {...props}>
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      "mt-2 data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:slide-in-from-bottom-2 duration-200",
+      className
+    )}
+    {...props}
+  >
     {children}
   </TabsPrimitive.Content>
 ));

@@ -13,9 +13,10 @@ interface DeleteWardDialogProps {
   onOpenChange: (open: boolean) => void;
   ward?: Ward | null;
   onDelete?: (wardId: number) => void;
+  currentUserEmail?: string;
 }
 
-export const DeleteWardDialog = ({ open, onOpenChange, ward, onDelete }: DeleteWardDialogProps) => {
+export const DeleteWardDialog = ({ open, onOpenChange, ward, onDelete, currentUserEmail }: DeleteWardDialogProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Check if ward can be deleted (no occupied cages)
@@ -28,7 +29,7 @@ export const DeleteWardDialog = ({ open, onOpenChange, ward, onDelete }: DeleteW
     setIsDeleting(true);
     try {
       const res = await axios.delete("/api/wards/delete", {
-        data: { ward_id: ward.ward_id },
+        data: { ward_id: ward.ward_id, currentUserEmail },
       });
 
       if (res.data?.success) {

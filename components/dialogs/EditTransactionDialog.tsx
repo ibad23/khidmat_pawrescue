@@ -16,9 +16,10 @@ interface EditTransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   transaction?: Transaction | null;
   onEdit?: () => void;
+  currentUserEmail?: string;
 }
 
-export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit }: EditTransactionDialogProps) => {
+export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit, currentUserEmail }: EditTransactionDialogProps) => {
   const [formData, setFormData] = useState({ billFor: "", mode: "", amount: "", remarks: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,6 +52,7 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit 
         mode: formData.mode,
         amount: formData.amount,
         remarks: formData.remarks,
+        currentUserEmail,
       });
       onEdit?.();
       toast.success("Transaction updated successfully");

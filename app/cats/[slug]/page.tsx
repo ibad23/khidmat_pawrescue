@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCatId, formatCageNo, mapStatusToColor } from "@/lib/utils";
-import { STATUS_COLORS, STATUS_DOT_COLORS, StatusColor } from "@/lib/types";
+import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, StatusColor } from "@/lib/types";
 import { toast } from "sonner";
+import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 interface CatData {
   cat_id: number;
@@ -32,7 +34,11 @@ interface CatData {
   cage_id: number | null;
   status: string;
   admitted_on: string | null;
-  cage: { cage_id: number; cage_no: number } | null;
+  cage: {
+    cage_id: number;
+    cage_no: number;
+    ward?: { ward_id: number; code: string } | null;
+  } | null;
   externals: {
     external_id: number;
     name: string;
@@ -66,6 +72,8 @@ interface TreatmentData {
 export default function CatDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const slugRaw = params?.slug;
   const slugParam = Array.isArray(slugRaw) ? slugRaw[0] : (slugRaw ?? "");
 
@@ -137,6 +145,7 @@ export default function CatDetailPage() {
       await axios.patch("/api/cats/update", {
         cat_id: cat.cat_id,
         status: newStatus,
+        currentUserEmail: user?.email,
       });
       toast.success("Status updated");
       setCat((prev) => prev ? { ...prev, status: newStatus } : null);
@@ -165,7 +174,7 @@ export default function CatDetailPage() {
     setIsDeleting(true);
     try {
       await axios.delete("/api/cats/delete", {
-        data: { cat_id: cat.cat_id },
+        data: { cat_id: cat.cat_id, currentUserEmail: user?.email },
       });
       toast.success("Cat deleted successfully");
       router.push("/cats");
@@ -249,7 +258,7 @@ export default function CatDetailPage() {
                         <div className="text-sm">
                           <span className="text-muted-foreground">Cage: </span>
                           <span className="text-foreground font-medium">
-                            {cat?.cage?.cage_no ? formatCageNo(cat.cage.cage_no) : "-"}
+                            {cat?.cage?.cage_no ? formatCageNo(cat.cage.cage_no, cat.cage.ward?.code) : "-"}
                           </span>
                         </div>
                       </div>
@@ -281,7 +290,7 @@ export default function CatDetailPage() {
                         className="inline-flex items-center focus:outline-none"
                         disabled={updatingStatus}
                       >
-                        <Badge className={`${STATUS_COLORS[statusColor]} ${updatingStatus ? "opacity-50" : ""}`}>
+                        <Badge className={`${STATUS_COLORS[statusColor]} ring-2 ${STATUS_RING_COLORS[statusColor]} ${updatingStatus ? "opacity-50" : ""}`}>
                           {cat?.status || "Unknown"}
                           <ChevronDown className="w-4 h-4 ml-1" />
                         </Badge>
@@ -304,18 +313,20 @@ export default function CatDetailPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive" onClick={handleDelete}>Delete</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {(canEdit || canDelete) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {canEdit && <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>}
+                      {canEdit && canDelete && <DropdownMenuSeparator />}
+                      {canDelete && <DropdownMenuItem className="text-destructive" onClick={handleDelete}>Delete</DropdownMenuItem>}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
 
@@ -421,6 +432,7 @@ export default function CatDetailPage() {
         onOpenChange={setShowEditDialog}
         cat={catForEdit}
         onEdit={handleEditSubmit}
+        currentUserEmail={user?.email}
       />
 
       <DeleteCatDialog

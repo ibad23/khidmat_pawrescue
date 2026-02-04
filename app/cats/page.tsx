@@ -27,9 +27,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { formatCatId, formatCageNo, mapStatusToColor, formatDate } from "@/lib/utils";
-import { STATUS_COLORS, STATUS_DOT_COLORS, Cat } from "@/lib/types";
+import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, Cat } from "@/lib/types";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
+import usePermissions from "@/hooks/usePermissions";
 
 interface CatRaw {
   cat_id: number;
@@ -40,7 +41,11 @@ interface CatRaw {
   cage_id: number | null;
   status: string;
   admitted_on: string | null;
-  cage: { cage_id: number; cage_no: number } | null;
+  cage: {
+    cage_id: number;
+    cage_no: number;
+    ward?: { ward_id: number; code: string } | null;
+  } | null;
   externals: {
     external_id: number;
     name: string;
@@ -65,6 +70,7 @@ interface CatForEdit {
 
 export default function CatsPage() {
   const router = useRouter();
+  const { canEdit, canDelete } = usePermissions();
   const [cats, setCats] = useState<Cat[]>([]);
   const [catsRaw, setCatsRaw] = useState<CatRaw[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +104,7 @@ export default function CatsPage() {
         date: r.admitted_on ? formatDate(r.admitted_on) : "",
         admitted_on_raw: r.admitted_on || null,
         type: r.type || "",
-        cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no) : "-",
+        cage: r.cage?.cage_no ? formatCageNo(r.cage.cage_no, r.cage.ward?.code) : "-",
         status: r.status || "",
         color: mapStatusToColor(r.status),
       }));
@@ -379,7 +385,7 @@ export default function CatsPage() {
                             className="inline-flex items-center gap-1 focus:outline-none"
                             disabled={updatingStatus === cat.cat_id}
                           >
-                            <Badge className={`${STATUS_COLORS[cat.color]} ${updatingStatus === cat.cat_id ? "opacity-50" : ""}`}>
+                            <Badge className={`${STATUS_COLORS[cat.color]} ring-2 ${STATUS_RING_COLORS[cat.color]} ${updatingStatus === cat.cat_id ? "opacity-50" : ""}`}>
                               {cat.status}
                               <ChevronDown className="w-3 h-3 ml-1" />
                             </Badge>
@@ -405,25 +411,31 @@ export default function CatsPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditCat(cat); }}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {(canEdit || canDelete) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canEdit && (
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditCat(cat); }}>
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {canEdit && canDelete && <DropdownMenuSeparator />}
+                              {canDelete && (
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteCat(cat); }}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </td>
                   </tr>

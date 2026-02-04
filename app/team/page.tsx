@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, KeyRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,16 +16,20 @@ import {
 import { AddTeamMemberDialog } from "@/components/dialogs/AddTeamMemberDialog";
 import { EditTeamMemberDialog } from "@/components/dialogs/EditTeamMemberDialog";
 import { DeleteTeamMemberDialog } from "@/components/dialogs/DeleteTeamMemberDialog";
+import { ChangePasswordDialog } from "@/components/dialogs/ChangePasswordDialog";
 import { TeamMember } from "@/lib/types";
 import { toast } from "sonner";
 import axios from "axios";
 import useAuth from "@/hooks/useAuth";
+import usePermissions from "@/hooks/usePermissions";
 
 export default function TeamPage() {
   const { user } = useAuth();
+  const { canEdit, canDelete, canChangePassword } = usePermissions();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +70,11 @@ export default function TeamPage() {
   const handleDeleteClick = (member: TeamMember) => {
     setSelectedMember(member);
     setShowDeleteDialog(true);
+  };
+
+  const handleChangePasswordClick = (member: TeamMember) => {
+    setSelectedMember(member);
+    setShowChangePasswordDialog(true);
   };
 
   const confirmDelete = async () => {
@@ -129,30 +138,42 @@ export default function TeamPage() {
                   key={member.id}
                   className="bg-card border-border p-6 flex flex-col items-center text-center relative"
                 >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 h-8 w-8"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEditClick(member)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteClick(member)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {(canEdit || canDelete || canChangePassword) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit && (
+                          <DropdownMenuItem onClick={() => handleEditClick(member)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {canChangePassword && (
+                          <DropdownMenuItem onClick={() => handleChangePasswordClick(member)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Change Password
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick(member)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
 
                   <Avatar className="w-24 h-24 mb-4">
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary font-semibold">
@@ -204,6 +225,13 @@ export default function TeamPage() {
         member={selectedMember}
         onConfirm={confirmDelete}
         isDeleting={isDeleting}
+      />
+
+      <ChangePasswordDialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
+        member={selectedMember}
+        currentUserEmail={user?.email}
       />
     </DashboardLayout>
   );

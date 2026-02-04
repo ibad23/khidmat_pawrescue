@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import client from "@/app/api/client";
+import { canUserEdit } from "@/lib/permissions";
 
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { transaction_id, bill_for, mode, amount, date, remarks } = body;
+    const { transaction_id, bill_for, mode, amount, date, remarks, currentUserEmail } = body;
 
     if (!transaction_id) return NextResponse.json({ error: "transaction_id required" }, { status: 400 });
+
+    // Check permissions
+    if (!currentUserEmail || !(await canUserEdit(currentUserEmail))) {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
+    }
 
     const payload: any = {};
     if (bill_for !== undefined) payload.bill_for = bill_for;

@@ -26,8 +26,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCatId, formatDateTime } from "@/lib/utils";
 import { Treatment } from "@/lib/types";
 import { usePagination } from "@/hooks/usePagination";
+import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 export default function TreatmentsPage() {
+  const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -82,7 +86,7 @@ export default function TreatmentsPage() {
     if (!selectedTreatment) return;
     try {
       const resp = await axios.delete('/api/treatments/delete', {
-        data: { treatment_id: selectedTreatment.id }
+        data: { treatment_id: selectedTreatment.id, currentUserEmail: user?.email }
       });
       if (resp.status === 200) {
         loadTreatments();
@@ -228,17 +232,19 @@ export default function TreatmentsPage() {
                     <td className="py-4 px-4 text-foreground">{treatment.time}</td>
                     <td className="py-4 px-4 text-foreground">{treatment.givenBy}</td>
                     <td className="py-4 px-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditTreatment(treatment)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteTreatment(treatment)}>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {(canEdit || canDelete) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canEdit && <DropdownMenuItem onClick={() => handleEditTreatment(treatment)}>Edit</DropdownMenuItem>}
+                            {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteTreatment(treatment)}>Delete</DropdownMenuItem>}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -295,7 +301,7 @@ export default function TreatmentsPage() {
       </div>
 
       <AddTreatmentDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddTreatment} />
-      <EditTreatmentDialog open={showEditDialog} onOpenChange={setShowEditDialog} treatment={selectedTreatment} onEdit={handleEditSubmit} />
+      <EditTreatmentDialog open={showEditDialog} onOpenChange={setShowEditDialog} treatment={selectedTreatment} onEdit={handleEditSubmit} currentUserEmail={user?.email} />
       <DeleteTreatmentDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} onConfirm={confirmDelete} />
     </DashboardLayout>
   );

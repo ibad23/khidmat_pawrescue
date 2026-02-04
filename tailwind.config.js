@@ -50,6 +50,13 @@ module.exports = {
         'status-danger': 'hsl(var(--status-danger))',
         'status-purple': 'hsl(var(--status-purple))',
       },
+      ringColor: {
+        'status-success': 'hsl(var(--status-success))',
+        'status-info': 'hsl(var(--status-info))',
+        'status-warning': 'hsl(var(--status-warning))',
+        'status-danger': 'hsl(var(--status-danger))',
+        'status-purple': 'hsl(var(--status-purple))',
+      },
       borderRadius: {
         lg: 'var(--radius)',
       },

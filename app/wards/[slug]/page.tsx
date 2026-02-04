@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Filter, RotateCcw, Trash2, ArrowRightLeft } from "lucide-react";
+import { Filter, RotateCcw, Trash2, ArrowRightLeft, ArrowLeft } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -27,6 +27,8 @@ import { toast } from "sonner";
 import { formatCatId, formatCageNo, formatDate } from "@/lib/utils";
 import { EditWardDialog } from "@/components/dialogs/EditWardDialog";
 import type { Ward, CageDetail } from "@/lib/types";
+import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 interface CageRow {
   cage_id: number;
@@ -42,6 +44,8 @@ interface CageRow {
 export default function WardDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const wardId = params.slug as string;
 
   const [ward, setWard] = useState<Ward | null>(null);
@@ -123,7 +127,7 @@ export default function WardDetailPage() {
     setIsDeleting(cage.cage_id);
     try {
       await axios.delete("/api/cages/delete", {
-        data: { cage_id: cage.cage_id },
+        data: { cage_id: cage.cage_id, currentUserEmail: user?.email },
       });
       toast.success("Cage deleted successfully");
       setCages((prev) => prev.filter((c) => c.cage_id !== cage.cage_id));
@@ -164,6 +168,7 @@ export default function WardDetailPage() {
       await axios.patch("/api/cages/transfer", {
         cage_id: selectedCage.cage_id,
         target_ward_id: Number(targetWardId),
+        currentUserEmail: user?.email,
       });
       toast.success("Cage transferred successfully");
       setShowTransferDialog(false);
@@ -256,8 +261,9 @@ export default function WardDetailPage() {
           <div>
             <button
               onClick={() => router.push("/wards")}
-              className="text-sm text-muted-foreground mb-1 hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-1 transition-colors"
             >
+              <ArrowLeft className="w-4 h-4" />
               Wards / {ward.name}
             </button>
             <h1 className="text-3xl font-bold text-foreground">{ward.name}</h1>
@@ -265,12 +271,14 @@ export default function WardDetailPage() {
               {ward.totalCages} total cages | {ward.freeCages} free | {ward.totalCages - ward.freeCages} occupied
             </p>
           </div>
-          <Button
-            onClick={() => setShowEditDialog(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            Edit Ward Details
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setShowEditDialog(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              Edit Ward Details
+            </Button>
+          )}
         </div>
 
         <Card className="bg-card border-border p-4">
@@ -347,27 +355,31 @@ export default function WardDetailPage() {
                       )}
                     </td>
                     <td className="py-4 px-4">
-                      {cage.cage_status !== "Occupied" && (
+                      {cage.cage_status !== "Occupied" && (canEdit || canDelete) && (
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-primary"
-                            onClick={() => handleTransferClick(cage)}
-                            disabled={isDeleting === cage.cage_id || otherWards.length === 0}
-                            title="Transfer to another ward"
-                          >
-                            <ArrowRightLeft className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive/90"
-                            onClick={() => handleDeleteCage(cage)}
-                            disabled={isDeleting === cage.cage_id}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:text-primary"
+                              onClick={() => handleTransferClick(cage)}
+                              disabled={isDeleting === cage.cage_id || otherWards.length === 0}
+                              title="Transfer to another ward"
+                            >
+                              <ArrowRightLeft className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive/90"
+                              onClick={() => handleDeleteCage(cage)}
+                              disabled={isDeleting === cage.cage_id}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       )}
                     </td>
@@ -384,6 +396,7 @@ export default function WardDetailPage() {
         onOpenChange={setShowEditDialog}
         ward={ward}
         onEdit={handleEditWard}
+        currentUserEmail={user?.email}
       />
 
       {/* Transfer Cage Dialog */}

@@ -34,6 +34,8 @@ import axios from "axios";
 import { Donation, Revenue, Transaction } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
+import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 function mapDonation(d: any): Donation {
   return {
@@ -79,6 +81,8 @@ function isInDateRange(dateStr: string, range: string): boolean {
 }
 
 const FinancesPage = () => {
+  const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const [showAddDonation, setShowAddDonation] = useState(false);
   const [showAddRevenue, setShowAddRevenue] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
@@ -171,7 +175,7 @@ const FinancesPage = () => {
   const handleDeleteDonation = async () => {
     if (!deleteDonation) return;
     try {
-      await axios.delete("/api/donations/delete", { data: { donation_id: deleteDonation.donation_id } });
+      await axios.delete("/api/donations/delete", { data: { donation_id: deleteDonation.donation_id, currentUserEmail: user?.email } });
       loadDonations();
     } catch { toast.error("Failed to delete donation"); }
   };
@@ -179,7 +183,7 @@ const FinancesPage = () => {
   const handleDeleteRevenue = async () => {
     if (!deleteRevenue) return;
     try {
-      await axios.delete("/api/revenue/delete", { data: { revenue_id: deleteRevenue.revenue_id } });
+      await axios.delete("/api/revenue/delete", { data: { revenue_id: deleteRevenue.revenue_id, currentUserEmail: user?.email } });
       loadRevenue();
     } catch { toast.error("Failed to delete revenue"); }
   };
@@ -187,7 +191,7 @@ const FinancesPage = () => {
   const handleDeleteTransaction = async () => {
     if (!deleteTransaction) return;
     try {
-      await axios.delete("/api/transactions/delete", { data: { transaction_id: deleteTransaction.transaction_id } });
+      await axios.delete("/api/transactions/delete", { data: { transaction_id: deleteTransaction.transaction_id, currentUserEmail: user?.email } });
       loadTransactions();
     } catch { toast.error("Failed to delete transaction"); }
   };
@@ -317,13 +321,15 @@ const FinancesPage = () => {
                       <td className="py-4 px-4 text-foreground">{d.mode}</td>
                       <td className="py-4 px-4 text-foreground">{formatDate(d.date)}</td>
                       <td className="py-4 px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditDonation(d)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteDonation(d)}>Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {(canEdit || canDelete) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canEdit && <DropdownMenuItem onClick={() => setEditDonation(d)}>Edit</DropdownMenuItem>}
+                              {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => setDeleteDonation(d)}>Delete</DropdownMenuItem>}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -416,13 +422,15 @@ const FinancesPage = () => {
                       <td className="py-4 px-4 text-foreground">{r.remarks}</td>
                       <td className="py-4 px-4 text-foreground">{formatDate(r.date)}</td>
                       <td className="py-4 px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditRevenue(r)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteRevenue(r)}>Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {(canEdit || canDelete) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canEdit && <DropdownMenuItem onClick={() => setEditRevenue(r)}>Edit</DropdownMenuItem>}
+                              {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => setDeleteRevenue(r)}>Delete</DropdownMenuItem>}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -513,13 +521,15 @@ const FinancesPage = () => {
                       <td className="py-4 px-4 text-foreground">{t.remarks}</td>
                       <td className="py-4 px-4 text-foreground">{formatDate(t.date)}</td>
                       <td className="py-4 px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditTransaction(t)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTransaction(t)}>Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {(canEdit || canDelete) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canEdit && <DropdownMenuItem onClick={() => setEditTransaction(t)}>Edit</DropdownMenuItem>}
+                              {canDelete && <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTransaction(t)}>Delete</DropdownMenuItem>}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -560,9 +570,9 @@ const FinancesPage = () => {
       <AddTransactionDialog open={showAddTransaction} onOpenChange={setShowAddTransaction} onAdd={loadTransactions} />
 
       {/* Edit Dialogs */}
-      <EditDonationDialog open={!!editDonation} onOpenChange={(o) => !o && setEditDonation(null)} donation={editDonation} onEdit={loadDonations} />
-      <EditRevenueDialog open={!!editRevenue} onOpenChange={(o) => !o && setEditRevenue(null)} revenue={editRevenue} onEdit={loadRevenue} />
-      <EditTransactionDialog open={!!editTransaction} onOpenChange={(o) => !o && setEditTransaction(null)} transaction={editTransaction} onEdit={loadTransactions} />
+      <EditDonationDialog open={!!editDonation} onOpenChange={(o) => !o && setEditDonation(null)} donation={editDonation} onEdit={loadDonations} currentUserEmail={user?.email} />
+      <EditRevenueDialog open={!!editRevenue} onOpenChange={(o) => !o && setEditRevenue(null)} revenue={editRevenue} onEdit={loadRevenue} currentUserEmail={user?.email} />
+      <EditTransactionDialog open={!!editTransaction} onOpenChange={(o) => !o && setEditTransaction(null)} transaction={editTransaction} onEdit={loadTransactions} currentUserEmail={user?.email} />
 
       {/* Delete Dialogs */}
       <DeleteDonationDialog open={!!deleteDonation} onOpenChange={(o) => !o && setDeleteDonation(null)} onConfirm={handleDeleteDonation} />

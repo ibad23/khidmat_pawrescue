@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import client from "@/app/api/client";
+import { canUserEdit } from "@/lib/permissions";
 
 export async function PATCH(req: Request) {
   try {
@@ -16,10 +17,16 @@ export async function PATCH(req: Request) {
       contact_num,
       address,
       old_cage_id,
+      currentUserEmail,
     } = body;
 
     if (!cat_id) {
       return NextResponse.json({ error: "cat_id is required" }, { status: 400 });
+    }
+
+    // Check permissions
+    if (!currentUserEmail || !(await canUserEdit(currentUserEmail))) {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
     }
 
     // Get the current cat to check existing external

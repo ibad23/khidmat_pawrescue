@@ -16,9 +16,10 @@ interface EditRevenueDialogProps {
   onOpenChange: (open: boolean) => void;
   revenue?: Revenue | null;
   onEdit?: () => void;
+  currentUserEmail?: string;
 }
 
-export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit }: EditRevenueDialogProps) => {
+export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit, currentUserEmail }: EditRevenueDialogProps) => {
   const [formData, setFormData] = useState({ name: "", contactNo: "", mode: "", amount: "", remarks: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,6 +54,7 @@ export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit }: EditR
         mode: formData.mode,
         amount: formData.amount,
         remarks: formData.remarks,
+        currentUserEmail,
       });
       onEdit?.();
       toast.success("Revenue updated successfully");

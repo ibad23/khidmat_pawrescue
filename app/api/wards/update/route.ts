@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import client from "@/app/api/client";
+import { canUserEdit } from "@/lib/permissions";
 
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { ward_id, name, code, totalCages } = body;
+    const { ward_id, name, code, totalCages, currentUserEmail } = body;
 
     if (!ward_id) {
       return NextResponse.json({ error: "ward_id is required" }, { status: 400 });
+    }
+
+    // Check permissions
+    if (!currentUserEmail || !(await canUserEdit(currentUserEmail))) {
+      return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 403 });
     }
 
     // Get current ward data and cage counts
