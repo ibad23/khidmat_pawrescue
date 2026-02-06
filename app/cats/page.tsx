@@ -31,6 +31,7 @@ import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, Cat } from "@/lib
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
 import usePermissions from "@/hooks/usePermissions";
+import useAuth from "@/hooks/useAuth";
 
 interface CatRaw {
   cat_id: number;
@@ -71,6 +72,7 @@ interface CatForEdit {
 export default function CatsPage() {
   const router = useRouter();
   const { canEdit, canDelete } = usePermissions();
+  const { user } = useAuth();
   const [cats, setCats] = useState<Cat[]>([]);
   const [catsRaw, setCatsRaw] = useState<CatRaw[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +161,7 @@ export default function CatsPage() {
     setIsDeleting(true);
     try {
       await axios.delete("/api/cats/delete", {
-        data: { cat_id: selectedCatForDelete.cat_id },
+        data: { cat_id: selectedCatForDelete.cat_id, currentUserEmail: user?.email },
       });
       toast.success("Cat deleted successfully");
       loadCats();
@@ -180,6 +182,7 @@ export default function CatsPage() {
       await axios.patch("/api/cats/update", {
         cat_id: cat.cat_id,
         status: newStatus,
+        currentUserEmail: user?.email,
       });
       toast.success("Status updated");
       // Update local state immediately
@@ -493,7 +496,7 @@ export default function CatsPage() {
       </div>
 
       <AddCatDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAdd={handleAddCat} />
-      <EditCatDialog open={showEditDialog} onOpenChange={setShowEditDialog} cat={selectedCat} onEdit={handleEditSubmit} />
+      <EditCatDialog open={showEditDialog} onOpenChange={setShowEditDialog} cat={selectedCat} onEdit={handleEditSubmit} currentUserEmail={user?.email} />
       <DeleteCatDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
