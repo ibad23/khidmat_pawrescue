@@ -361,12 +361,12 @@ export default function WardDetailPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="hover:bg-muted"
+                              className="hover:text-destructive/90"
                               onClick={() => handleTransferClick(cage)}
                               disabled={isDeleting === cage.cage_id || otherWards.length === 0}
                               title="Transfer to another ward"
                             >
-                              <ArrowRightLeft className="w-4 h-4 text-foreground" />
+                              <ArrowRightLeft className="w-4 h-4 text-foreground"/>
                             </Button>
                           )}
                           {canDelete && (
