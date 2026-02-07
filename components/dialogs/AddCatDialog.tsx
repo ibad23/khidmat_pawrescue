@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatCatId, formatCageNo } from "@/lib/utils";
+import { formatCatId, formatCageNo, formatPhoneInput, isValidPhone } from "@/lib/utils";
 
 interface External {
   external_id: number;
@@ -55,7 +55,7 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     if (matchingExternal) {
       setFormData((prev) => ({
         ...prev,
-        contactNo: matchingExternal.contact_num || prev.contactNo,
+        contactNo: formatPhoneInput(matchingExternal.contact_num || prev.contactNo),
         address: matchingExternal.address || prev.address,
       }));
     }
@@ -65,10 +65,31 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!formData.gender) {
+      toast.error("Please select a Gender");
+      return;
+    }
+    if (!formData.type) {
+      toast.error("Please select a Type");
+      return;
+    }
+    if (!formData.cageId) {
+      toast.error("Please select a Cage");
+      return;
+    }
+    if (!formData.status) {
+      toast.error("Please select a Status");
+      return;
+    }
+    if (formData.contactNo && !isValidPhone(formData.contactNo)) {
+      toast.error("Contact No. must be exactly 11 digits");
+      return;
+    }
+
     if (formData.age) {
       const age = Number(formData.age);
       if (isNaN(age) || age < 0) {
-        toast.error("Age cannot be negative");
+        toast.error("Age in months cannot be negative");
         return;
       }
     }
@@ -180,12 +201,12 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Age</Label>
+              <Label>Age (Months)</Label>
               <Input
                 type="number"
                 min="0"
-                step="0.1"
-                placeholder="Age in years"
+                step="1"
+                placeholder="Age in months"
                 className="bg-muted border-border"
                 required
                 value={formData.age}
@@ -274,11 +295,11 @@ export const AddCatDialog = ({ open, onOpenChange, onAdd }: AddCatDialogProps) =
             <div className="space-y-2">
               <Label>Contact No.</Label>
               <Input
-                placeholder="xxx-xxx-xxx"
+                placeholder="0XXX-XXXXXXX"
                 className="bg-muted border-border"
                 required
                 value={formData.contactNo}
-                onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, contactNo: formatPhoneInput(e.target.value) })}
               />
             </div>
           </div>

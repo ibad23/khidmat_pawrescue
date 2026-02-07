@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { formatPhoneInput, isValidPhone } from "@/lib/utils";
 
 interface External {
   external_id: number;
@@ -75,7 +76,7 @@ export const AddDonationDialog = ({ open, onOpenChange, onAdd }: AddDonationDial
   };
 
   const selectExisting = (ext: External) => {
-    setFormData({ ...formData, donorName: ext.name, contactNo: ext.contact_num || "" });
+    setFormData({ ...formData, donorName: ext.name, contactNo: formatPhoneInput(ext.contact_num || "") });
     setSelectedExternalId(ext.external_id);
     setShowMatchPrompt(false);
   };
@@ -88,6 +89,15 @@ export const AddDonationDialog = ({ open, onOpenChange, onAdd }: AddDonationDial
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    if (!formData.mode) {
+      toast.error("Please select a Mode");
+      return;
+    }
+    if (!isValidPhone(formData.contactNo)) {
+      toast.error("Contact No. must be exactly 11 digits");
+      return;
+    }
 
     const amount = Number(formData.amount);
     if (isNaN(amount) || amount < 0) {
@@ -155,8 +165,8 @@ export const AddDonationDialog = ({ open, onOpenChange, onAdd }: AddDonationDial
             <Label>Contact No.</Label>
             <Input
               value={formData.contactNo}
-              onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })}
-              placeholder="03XX-XXXXXXX"
+              onChange={(e) => setFormData({ ...formData, contactNo: formatPhoneInput(e.target.value) })}
+              placeholder="0XXX-XXXXXXX"
               className="bg-muted border-border"
               required
               disabled={!!selectedExternalId}

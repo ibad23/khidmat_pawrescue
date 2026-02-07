@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { PieChart, Pie, Cell, Legend } from 'recharts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatPhoneDisplay } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { DashboardData, CatStatusDataPoint, TopReporter } from "@/lib/types";
@@ -34,14 +35,7 @@ const DashboardPage = () => {
     fetchDashboard();
   }, [dateFilter]);
 
-  // Format contact: insert a hyphen after the first 4 digits for display
-  const formatContact = (c?: string | null) => {
-    if (!c) return null;
-    const digits = c.replace(/\D/g, "");
-    if (!digits) return null;
-    if (digits.length <= 4) return digits;
-    return `${digits.slice(0,4)}-${digits.slice(4)}`;
-  };
+  const formatContact = (c?: string | null) => c ? formatPhoneDisplay(c) : null;
 
   return (
     <DashboardLayout>

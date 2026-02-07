@@ -51,6 +51,11 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!formData.roleId) {
+      toast.error("Please select a Role");
+      return;
+    }
+
     // Validate password length
     if (formData.password.length < 8) {
       toast.error("Password must be at least 8 characters long");

@@ -116,7 +116,15 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
     if (isSubmitting) return;
 
     if (!selectedCat) {
-      toast.error("Please select a cat");
+      toast.error("Please select a Cat");
+      return;
+    }
+    if (!dateTimeLocal) {
+      toast.error("Please select a Date / Time");
+      return;
+    }
+    if (!formData.treatment.trim()) {
+      toast.error("Please enter Treatment Details");
       return;
     }
 
@@ -248,6 +256,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
               value={dateTimeLocal}
               onChange={(e) => setDateTimeLocal(e.target.value)}
               className="bg-muted border-border"
+              required
             />
           </div>
 

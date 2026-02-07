@@ -9,12 +9,9 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const getInitials = (name: string): string => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return (parts[0]?.[0] ?? "").toUpperCase();
 };
 
 interface DashboardLayoutProps {

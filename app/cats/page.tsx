@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-import { formatCatId, formatCageNo, mapStatusToColor, formatDate } from "@/lib/utils";
+import { formatCatId, formatCageNo, mapStatusToColor, formatDate, formatPhoneDisplay } from "@/lib/utils";
 import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, Cat } from "@/lib/types";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
@@ -102,7 +102,7 @@ export default function CatsPage() {
         cat_id: r.cat_id,
         name: r.cat_name || "",
         owner: r.externals?.name || "",
-        contact: r.externals?.contact_num || "",
+        contact: formatPhoneDisplay(r.externals?.contact_num || ""),
         date: r.admitted_on ? formatDate(r.admitted_on) : "",
         admitted_on_raw: r.admitted_on || null,
         type: r.type || "",

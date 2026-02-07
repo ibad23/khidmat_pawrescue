@@ -78,6 +78,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-secondary border-border"
+                    required
                   />
                 </div>
 
@@ -92,6 +93,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-secondary border-border"
+                    required
                   />
                 </div>
 

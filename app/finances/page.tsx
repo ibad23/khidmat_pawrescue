@@ -32,7 +32,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Donation, Revenue, Transaction } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPhoneDisplay } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
 import usePermissions from "@/hooks/usePermissions";
 import useAuth from "@/hooks/useAuth";
@@ -215,10 +215,7 @@ const FinancesPage = () => {
   };
 
   const formatAmount = (n: number) => n.toLocaleString() + " PKR";
-  const formatContact = (c: string) => {
-    const digits = c.replace(/\D/g, "");
-    return digits.length > 4 ? digits.slice(0, 4) + "-" + digits.slice(4) : digits;
-  };
+  const formatContact = (c: string) => formatPhoneDisplay(c);
 
   const SkeletonRows = ({ cols }: { cols: number }) => (
     <>

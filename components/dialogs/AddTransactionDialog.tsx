@@ -29,6 +29,11 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!formData.mode) {
+      toast.error("Please select a Mode");
+      return;
+    }
+
     const amount = Number(formData.amount);
     if (isNaN(amount) || amount < 0) {
       toast.error("Amount cannot be negative");

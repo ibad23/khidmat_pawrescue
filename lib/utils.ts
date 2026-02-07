@@ -59,6 +59,34 @@ export function formatDateTime(dateString: string | Date): string {
 /**
  * Map a status string to a color key
  */
+/**
+ * Format a phone input value: strip non-digits, insert hyphen after 4th digit, limit to 11 digits.
+ * e.g. "03203220481" -> "0320-3220481"
+ */
+export function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length > 4) return digits.slice(0, 4) + "-" + digits.slice(4);
+  return digits;
+}
+
+/**
+ * Format a stored phone number for display with hyphen after 4th digit.
+ */
+export function formatPhoneDisplay(value: string): string {
+  if (!value) return "-";
+  const digits = value.replace(/\D/g, "");
+  if (digits.length > 4) return digits.slice(0, 4) + "-" + digits.slice(4);
+  return digits || "-";
+}
+
+/**
+ * Validate phone number: must be exactly 11 digits.
+ */
+export function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 11;
+}
+
 export function mapStatusToColor(status?: string): StatusColor {
   if (!status) return "purple";
   const s = status.toLowerCase();

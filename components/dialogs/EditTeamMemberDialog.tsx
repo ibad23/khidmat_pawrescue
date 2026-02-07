@@ -62,6 +62,11 @@ export const EditTeamMemberDialog = ({ open, onOpenChange, member, onEdit, curre
     e.preventDefault();
     if (isSubmitting || !member) return;
 
+    if (!formData.roleId) {
+      toast.error("Please select a Role");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {

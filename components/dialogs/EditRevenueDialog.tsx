@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Revenue } from "@/lib/types";
+import { formatPhoneInput, isValidPhone } from "@/lib/utils";
 
 interface EditRevenueDialogProps {
   open: boolean;
@@ -27,7 +28,7 @@ export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit, current
     if (revenue) {
       setFormData({
         name: revenue.buyer_name || "",
-        contactNo: revenue.contact_num || "",
+        contactNo: formatPhoneInput(revenue.contact_num || ""),
         mode: revenue.mode || "",
         amount: String(revenue.amount || ""),
         remarks: revenue.remarks || "",
@@ -38,6 +39,15 @@ export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit, current
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || !revenue) return;
+
+    if (!formData.mode) {
+      toast.error("Please select a Mode");
+      return;
+    }
+    if (!isValidPhone(formData.contactNo)) {
+      toast.error("Contact No. must be exactly 11 digits");
+      return;
+    }
 
     const amount = Number(formData.amount);
     if (isNaN(amount) || amount < 0) {
@@ -80,7 +90,7 @@ export const EditRevenueDialog = ({ open, onOpenChange, revenue, onEdit, current
             </div>
             <div className="space-y-2">
               <Label>Contact No.</Label>
-              <Input value={formData.contactNo} onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })} className="bg-muted border-border" required />
+              <Input value={formData.contactNo} onChange={(e) => setFormData({ ...formData, contactNo: formatPhoneInput(e.target.value) })} placeholder="0XXX-XXXXXXX" className="bg-muted border-border" required />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-6">

@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCatId, formatCageNo, mapStatusToColor } from "@/lib/utils";
+import { formatCatId, formatCageNo, mapStatusToColor, formatPhoneDisplay } from "@/lib/utils";
 import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, StatusColor } from "@/lib/types";
 import { toast } from "sonner";
 import usePermissions from "@/hooks/usePermissions";
@@ -273,7 +273,7 @@ export default function CatDetailPage() {
                         <Clock className="w-4 h-4 text-muted-foreground" />
                         <div className="text-sm">
                           <span className="text-muted-foreground">Age: </span>
-                          <span className="text-foreground font-medium">{cat?.age !== null && cat?.age !== undefined ? `${cat.age} yr${cat.age !== 1 ? 's' : ''}` : "-"}</span>
+                          <span className="text-foreground font-medium">{cat?.age !== null && cat?.age !== undefined ? `${cat.age} month${cat.age !== 1 ? 's' : ''}` : "-"}</span>
                         </div>
                       </div>
                     </div>
@@ -402,7 +402,7 @@ export default function CatDetailPage() {
                         </div>
                         <div>
                           <div className="text-muted-foreground">Contact No:</div>
-                          <div className="text-foreground font-medium">{cat?.externals?.contact_num || "-"}</div>
+                          <div className="text-foreground font-medium">{formatPhoneDisplay(cat?.externals?.contact_num || "")}</div>
                         </div>
                         <div>
                           <div className="text-muted-foreground">Address:</div>
