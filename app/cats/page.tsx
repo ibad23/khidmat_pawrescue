@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Filter, RotateCcw, MoreVertical, ChevronLeft, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical, ChevronDown, ExternalLink } from "lucide-react";
 import { AddCatDialog } from "@/components/dialogs/AddCatDialog";
 import { EditCatDialog } from "@/components/dialogs/EditCatDialog";
 import { DeleteCatDialog } from "@/components/dialogs/DeleteCatDialog";
@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
-import { formatCatId, formatCageNo, mapStatusToColor, formatDate, formatPhoneDisplay } from "@/lib/utils";
+import { formatCatId, formatCageNo, mapStatusToColor, formatDate, formatPhoneDisplay, getErrorMessage } from "@/lib/utils";
 import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, Cat } from "@/lib/types";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/PaginationControls";
 import usePermissions from "@/hooks/usePermissions";
 import useAuth from "@/hooks/useAuth";
 
@@ -167,9 +168,9 @@ export default function CatsPage() {
       loadCats();
       setShowDeleteDialog(false);
       setSelectedCatForDelete(null);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete cat", err);
-      toast.error(err?.response?.data?.error || "Failed to delete cat");
+      toast.error(getErrorMessage(err, "Failed to delete cat"));
     } finally {
       setIsDeleting(false);
     }
@@ -200,9 +201,9 @@ export default function CatsPage() {
             : c
         )
       );
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to update status", err);
-      toast.error(err?.response?.data?.error || "Failed to update status");
+      toast.error(getErrorMessage(err, "Failed to update status"));
     } finally {
       setUpdatingStatus(null);
     }
@@ -275,13 +276,7 @@ export default function CatsPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Filter className="w-5 h-5" />
-            </Button>
+            <Filter className="w-5 h-5 text-muted-foreground" />
 
             <span className="text-sm text-muted-foreground">Filter By</span>
 
@@ -448,50 +443,17 @@ export default function CatsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {startIndex} to {endIndex} of {filteredCats.length} cats
-            </p>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              {getPageNumbers().map((page, index) => (
-                typeof page === "number" ? (
-                  <Button
-                    key={index}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => goToPage(page)}
-                    className={`h-8 w-8 ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
-                  >
-                    {page}
-                  </Button>
-                ) : (
-                  <span key={index} className="px-2 text-muted-foreground">...</span>
-                )
-              ))}
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        {!loading && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            totalItems={filteredCats.length}
+            itemLabel="cats"
+            goToPage={goToPage}
+            getPageNumbers={getPageNumbers}
+          />
         )}
       </div>
 

@@ -202,6 +202,17 @@ export interface DialogProps {
 }
 
 // ============================================
+// External (Donor/Reporter/Buyer) Types
+// ============================================
+
+export interface External {
+  external_id: number;
+  name: string;
+  contact_num: string;
+  address: string | null;
+}
+
+// ============================================
 // Profile Types
 // ============================================
 

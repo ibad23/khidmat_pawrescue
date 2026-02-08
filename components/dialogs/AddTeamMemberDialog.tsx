@@ -174,7 +174,7 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
             </p>
           </div>
 
-          <div className="flex gap-4 justify-end pt-2">
+          <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

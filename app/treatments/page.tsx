@@ -5,7 +5,7 @@ import axios from "axios";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Filter, RotateCcw, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical } from "lucide-react";
 import { AddTreatmentDialog } from "@/components/dialogs/AddTreatmentDialog";
 import { EditTreatmentDialog } from "@/components/dialogs/EditTreatmentDialog";
 import { DeleteTreatmentDialog } from "@/components/dialogs/DeleteTreatmentDialog";
@@ -24,8 +24,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCatId, formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 import { Treatment } from "@/lib/types";
 import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/PaginationControls";
 import usePermissions from "@/hooks/usePermissions";
 import useAuth from "@/hooks/useAuth";
 
@@ -89,12 +91,14 @@ export default function TreatmentsPage() {
         data: { treatment_id: selectedTreatment.id, currentUserEmail: user?.email }
       });
       if (resp.status === 200) {
+        toast.success("Treatment deleted successfully");
         loadTreatments();
         setShowDeleteDialog(false);
         setSelectedTreatment(null);
       }
     } catch (err) {
       console.error('Failed to delete treatment', err);
+      toast.error("Failed to delete treatment");
     }
   };
 
@@ -154,13 +158,7 @@ export default function TreatmentsPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Filter className="w-5 h-5" />
-            </Button>
+            <Filter className="w-5 h-5 text-muted-foreground" />
 
             <span className="text-sm text-muted-foreground">Filter By</span>
 
@@ -253,50 +251,17 @@ export default function TreatmentsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Showing {startIndex} to {endIndex} of {filteredTreatments.length} treatments
-            </p>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => goToPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="h-8 w-8"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-
-              {getPageNumbers().map((page, index) => (
-                typeof page === "number" ? (
-                  <Button
-                    key={index}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => goToPage(page)}
-                    className={`h-8 w-8 ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
-                  >
-                    {page}
-                  </Button>
-                ) : (
-                  <span key={index} className="px-2 text-muted-foreground">...</span>
-                )
-              ))}
-
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="h-8 w-8"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        {!loading && (
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            totalItems={filteredTreatments.length}
+            itemLabel="treatments"
+            goToPage={goToPage}
+            getPageNumbers={getPageNumbers}
+          />
         )}
       </div>
 

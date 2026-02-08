@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 import type { Ward } from "@/lib/types";
 import { AlertTriangle } from "lucide-react";
 
@@ -39,9 +40,9 @@ export const DeleteWardDialog = ({ open, onOpenChange, ward, onDelete, currentUs
       } else {
         throw new Error(res.data?.error || "Failed to delete ward");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.message || "Failed to delete ward");
+      toast.error(getErrorMessage(err, "Failed to delete ward"));
     } finally {
       setIsDeleting(false);
     }
@@ -102,8 +103,8 @@ export const DeleteWardDialog = ({ open, onOpenChange, ward, onDelete, currentUs
               Cancel
             </Button>
             <Button
-              variant="destructive"
               onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete"}

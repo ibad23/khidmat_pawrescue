@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 
 interface AddTransactionDialogProps {
   open: boolean;
@@ -52,8 +53,8 @@ export const AddTransactionDialog = ({ open, onOpenChange, onAdd }: AddTransacti
       toast.success("Transaction added successfully");
       onOpenChange(false);
       setFormData({ billFor: "", amount: "", mode: "", remarks: "" });
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to add transaction");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to add transaction"));
     } finally {
       setIsSubmitting(false);
     }

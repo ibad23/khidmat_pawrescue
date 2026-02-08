@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     const userRow = (resp as any).data as any;
     const userErr = (resp as any).error;
-    if (userErr) return NextResponse.json({ error: userErr.message }, { status: 501 });
+    if (userErr) return NextResponse.json({ error: userErr.message }, { status: 500 });
     if (!userRow) return NextResponse.json({ error: "not found" }, { status: 404 });
 
     // lookup role_desc

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 import { Eye, EyeOff } from "lucide-react";
 import { TeamMember } from "@/lib/types";
 
@@ -68,9 +69,9 @@ export const ChangePasswordDialog = ({
       } else {
         throw new Error(res.data?.error || "Failed to change password");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.message || "Failed to change password");
+      toast.error(getErrorMessage(err, "Failed to change password"));
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +149,7 @@ export const ChangePasswordDialog = ({
             <p className="text-sm text-destructive">Passwords do not match</p>
           )}
 
-          <div className="flex gap-4 justify-end pt-2">
+          <div className="flex gap-4 justify-end">
             <Button
               type="button"
               variant="ghost"

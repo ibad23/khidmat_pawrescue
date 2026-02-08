@@ -118,9 +118,7 @@ export default function WardsPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Filter className="w-5 h-5" />
-            </Button>
+            <Filter className="w-5 h-5 text-muted-foreground" />
 
             <span className="text-sm text-muted-foreground">Filter By</span>
 

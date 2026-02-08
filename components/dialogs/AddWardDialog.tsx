@@ -8,6 +8,7 @@ import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 
 interface AddWardDialogProps {
   open: boolean;
@@ -31,8 +32,12 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
     e.preventDefault();
     if (isSubmitting) return;
 
-    if (!wardName.trim() || !cageCode.trim()) {
-      toast.error("Ward name and cage code are required");
+    if (!wardName.trim()) {
+      toast.error("Please enter a Ward Name");
+      return;
+    }
+    if (!cageCode.trim()) {
+      toast.error("Please enter a Ward Cage Code");
       return;
     }
 
@@ -55,9 +60,9 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
       toast.success("Ward added successfully");
       onOpenChange(false);
       resetForm();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.message || "Failed to add ward");
+      toast.error(getErrorMessage(err, "Failed to add ward"));
     } finally {
       setIsSubmitting(false);
     }
@@ -65,7 +70,7 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-2xl">
+      <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Add New Ward</DialogTitle>
         </DialogHeader>
@@ -78,7 +83,6 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
               placeholder="Enter Ward Name"
               className="bg-muted border-border"
               required
-              disabled={isSubmitting}
             />
           </div>
 
@@ -90,7 +94,6 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
               placeholder="Enter Code for Cage e.g GW"
               className="bg-muted border-border"
               required
-              disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">
               This code will be used as prefix for cage IDs (e.g., GW-C01)
@@ -99,39 +102,29 @@ export const AddWardDialog = ({ open, onOpenChange, onAdd }: AddWardDialogProps)
 
           <div className="space-y-2">
             <Label>Number of Cages</Label>
-            <div className="flex items-center gap-3 bg-muted rounded-lg p-3">
+            <div className="flex items-center gap-4 bg-muted rounded-lg p-3">
               <Button
                 type="button"
                 size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="bg-primary hover:bg-primary/90 h-10 w-10"
                 onClick={() => setCageCount(Math.max(0, cageCount - 1))}
-                disabled={isSubmitting || cageCount === 0}
+                disabled={cageCount === 0}
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <Input
-                type="number"
-                min="0"
-                value={cageCount}
-                onChange={(e) => setCageCount(Math.max(0, parseInt(e.target.value) || 0))}
-                className="text-center text-2xl font-semibold bg-background border-border h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={isSubmitting}
-              />
+              <span className="text-xl font-medium flex-1 text-center">{cageCount}</span>
               <Button
                 type="button"
                 size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="bg-primary hover:bg-primary/90 h-10 w-10"
                 onClick={() => setCageCount(cageCount + 1)}
-                disabled={isSubmitting}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          <div className="flex gap-4 justify-end pt-4">
+          <div className="flex gap-4 justify-end">
             <Button
               type="button"
               variant="ghost"

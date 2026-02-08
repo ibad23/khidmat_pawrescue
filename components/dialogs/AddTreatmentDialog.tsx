@@ -9,7 +9,7 @@ import { Minus, Plus } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { formatCatId, formatForDatetimeLocal } from "@/lib/utils";
+import { formatCatId, formatForDatetimeLocal, getErrorMessage } from "@/lib/utils";
 import useAuth from "@/hooks/useAuth";
 
 interface AddTreatmentDialogProps {
@@ -132,8 +132,8 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
       setDateTimeLocal(formatForDatetimeLocal(new Date()));
       setTemp(100);
       setDetails("");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || "An error occurred while adding treatment");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "An error occurred while adding treatment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +151,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Add New Treatment</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             {/* Cat ID Search */}
             <div className="space-y-2 relative">
@@ -272,7 +272,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
             />
           </div>
 
-          <div className="flex gap-4 justify-end pt-2">
+          <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

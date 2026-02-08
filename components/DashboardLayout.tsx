@@ -7,12 +7,7 @@ import { useRouter } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const getInitials = (name: string): string => {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return (parts[0]?.[0] ?? "").toUpperCase();
-};
+import { getInitials } from "@/lib/utils";
 
 interface DashboardLayoutProps {
   children: ReactNode;

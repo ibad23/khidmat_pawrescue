@@ -9,14 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatCageNo, formatPhoneInput, isValidPhone } from "@/lib/utils";
-
-interface External {
-  external_id: number;
-  name: string;
-  contact_num: string;
-  address: string;
-}
+import { formatCageNo, formatPhoneInput, isValidPhone, getErrorMessage } from "@/lib/utils";
+import { External } from "@/lib/types";
 
 interface CatData {
   cat_id: number;
@@ -170,9 +164,9 @@ export const EditCatDialog = ({ open, onOpenChange, cat, onEdit, currentUserEmai
       toast.success("Cat updated successfully");
       onEdit?.();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.message || "Failed to update cat");
+      toast.error(getErrorMessage(err, "Failed to update cat"));
     } finally {
       setIsSubmitting(false);
     }

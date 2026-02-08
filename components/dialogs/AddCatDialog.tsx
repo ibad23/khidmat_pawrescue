@@ -10,13 +10,7 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { formatCatId, formatCageNo, formatPhoneInput, isValidPhone } from "@/lib/utils";
-
-interface External {
-  external_id: number;
-  name: string;
-  contact_num: string;
-  address: string;
-}
+import { External } from "@/lib/types";
 
 interface AddCatDialogProps {
   open: boolean;

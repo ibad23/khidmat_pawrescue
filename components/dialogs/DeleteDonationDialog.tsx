@@ -2,7 +2,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface DeleteDonationDialogProps {
   open: boolean;
@@ -13,7 +12,6 @@ interface DeleteDonationDialogProps {
 export const DeleteDonationDialog = ({ open, onOpenChange, onConfirm }: DeleteDonationDialogProps) => {
   const handleConfirm = () => {
     onConfirm?.();
-    toast.success("Donation deleted successfully");
     onOpenChange(false);
   };
 

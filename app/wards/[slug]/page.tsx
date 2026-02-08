@@ -24,7 +24,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatCatId, formatCageNo, formatDate } from "@/lib/utils";
+import { formatCatId, formatCageNo, formatDate, getErrorMessage } from "@/lib/utils";
 import { EditWardDialog } from "@/components/dialogs/EditWardDialog";
 import type { Ward, CageDetail } from "@/lib/types";
 import usePermissions from "@/hooks/usePermissions";
@@ -59,6 +59,9 @@ export default function WardDetailPage() {
   const [allWards, setAllWards] = useState<Ward[]>([]);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isTransferring, setIsTransferring] = useState(false);
+  const [showDeleteCageDialog, setShowDeleteCageDialog] = useState(false);
+  const [cageToDelete, setCageToDelete] = useState<CageRow | null>(null);
+  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
 
   const loadWardData = useCallback(async () => {
     try {
@@ -130,6 +133,8 @@ export default function WardDetailPage() {
         data: { cage_id: cage.cage_id, currentUserEmail: user?.email },
       });
       toast.success("Cage deleted successfully");
+      setShowDeleteCageDialog(false);
+      setCageToDelete(null);
       setCages((prev) => prev.filter((c) => c.cage_id !== cage.cage_id));
       // Update ward data
       if (ward) {
@@ -139,9 +144,9 @@ export default function WardDetailPage() {
           freeCages: ward.freeCages - 1,
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete cage", err);
-      toast.error(err?.response?.data?.error || "Failed to delete cage");
+      toast.error(getErrorMessage(err, "Failed to delete cage"));
     } finally {
       setIsDeleting(null);
     }
@@ -171,13 +176,13 @@ export default function WardDetailPage() {
         currentUserEmail: user?.email,
       });
       toast.success("Cage transferred successfully");
-      setShowTransferDialog(false);
+      setShowTransferConfirm(false);
       setSelectedCage(null);
       // Reload data
       loadWardData();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to transfer cage", err);
-      toast.error(err?.response?.data?.error || "Failed to transfer cage");
+      toast.error(getErrorMessage(err, "Failed to transfer cage"));
     } finally {
       setIsTransferring(false);
     }
@@ -283,9 +288,7 @@ export default function WardDetailPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Filter className="w-5 h-5" />
-            </Button>
+            <Filter className="w-5 h-5 text-muted-foreground" />
 
             <span className="text-sm text-muted-foreground">Filter By</span>
 
@@ -374,7 +377,7 @@ export default function WardDetailPage() {
                               variant="ghost"
                               size="icon"
                               className="text-destructive hover:text-destructive/90"
-                              onClick={() => handleDeleteCage(cage)}
+                              onClick={() => { setCageToDelete(cage); setShowDeleteCageDialog(true); }}
                               disabled={isDeleting === cage.cage_id}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -401,13 +404,13 @@ export default function WardDetailPage() {
 
       {/* Transfer Cage Dialog */}
       <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-w-md">
           <DialogHeader>
-            <DialogTitle>Transfer Cage</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">Transfer Cage</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Transfer cage {selectedCage && formatCageNo(selectedCage.cage_no, selectedCage.ward_code || ward?.code)} to another ward.
+          <div className="space-y-4">
+            <p className="text-foreground">
+              Transfer cage <span className="font-semibold">{selectedCage && formatCageNo(selectedCage.cage_no, selectedCage.ward_code || ward?.code)}</span> to another ward.
             </p>
             <Select value={targetWardId} onValueChange={setTargetWardId}>
               <SelectTrigger>
@@ -422,22 +425,89 @@ export default function WardDetailPage() {
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
+          <div className="flex gap-4 justify-end">
             <Button
-              variant="outline"
+              type="button"
+              variant="ghost"
+              className="text-primary"
               onClick={() => setShowTransferDialog(false)}
-              disabled={isTransferring}
             >
               Cancel
             </Button>
             <Button
-              onClick={handleTransfer}
-              disabled={isTransferring || !targetWardId}
-              className="bg-primary hover:bg-primary/90"
+              onClick={() => { setShowTransferDialog(false); setShowTransferConfirm(true); }}
+              disabled={!targetWardId}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {isTransferring ? "Transferring..." : "Transfer"}
+              Transfer
             </Button>
-          </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Cage Confirmation Dialog */}
+      <Dialog open={showTransferConfirm} onOpenChange={setShowTransferConfirm}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Confirm Transfer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <p className="text-foreground">
+              Are you sure you want to transfer cage <span className="font-semibold">{selectedCage && formatCageNo(selectedCage.cage_no, selectedCage.ward_code || ward?.code)}</span> to <span className="font-semibold">{otherWards.find(w => String(w.ward_id) === targetWardId)?.name || "Unknown"}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-4 justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-primary"
+                onClick={() => { setShowTransferConfirm(false); setShowTransferDialog(true); }}
+                disabled={isTransferring}
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleTransfer}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isTransferring}
+              >
+                {isTransferring ? "Transferring..." : "Confirm Transfer"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Cage Confirmation Dialog */}
+      <Dialog open={showDeleteCageDialog} onOpenChange={setShowDeleteCageDialog}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Delete Cage</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <p className="text-foreground">
+              Are you sure you want to delete cage <span className="font-semibold">{cageToDelete ? formatCageNo(cageToDelete.cage_no, cageToDelete.ward_code || ward?.code) : ""}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-4 justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-primary"
+                onClick={() => setShowDeleteCageDialog(false)}
+                disabled={isDeleting !== null}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => { if (cageToDelete) handleDeleteCage(cageToDelete); }}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                disabled={isDeleting !== null}
+              >
+                {isDeleting !== null ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

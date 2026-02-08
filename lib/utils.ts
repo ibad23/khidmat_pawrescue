@@ -87,6 +87,27 @@ export function isValidPhone(value: string): boolean {
   return digits.length === 11;
 }
 
+/**
+ * Get initials from a name (e.g., "John Doe" -> "JD")
+ */
+export function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return (parts[0]?.[0] ?? "").toUpperCase();
+}
+
+/**
+ * Extract a user-friendly error message from an Axios error or unknown error.
+ */
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object") {
+    const axiosErr = err as any;
+    if (axiosErr?.response?.data?.error) return axiosErr.response.data.error;
+    if (axiosErr?.message) return axiosErr.message;
+  }
+  return fallback;
+}
+
 export function mapStatusToColor(status?: string): StatusColor {
   if (!status) return "purple";
   const s = status.toLowerCase();

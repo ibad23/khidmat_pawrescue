@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCatId, formatCageNo, mapStatusToColor, formatPhoneDisplay } from "@/lib/utils";
+import { formatCatId, formatCageNo, mapStatusToColor, formatPhoneDisplay, getErrorMessage } from "@/lib/utils";
 import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, StatusColor } from "@/lib/types";
 import { toast } from "sonner";
 import usePermissions from "@/hooks/usePermissions";
@@ -149,9 +149,9 @@ export default function CatDetailPage() {
       });
       toast.success("Status updated");
       setCat((prev) => prev ? { ...prev, status: newStatus } : null);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to update status", err);
-      toast.error(err?.response?.data?.error || "Failed to update status");
+      toast.error(getErrorMessage(err, "Failed to update status"));
     } finally {
       setUpdatingStatus(false);
     }
@@ -178,9 +178,9 @@ export default function CatDetailPage() {
       });
       toast.success("Cat deleted successfully");
       router.push("/cats");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to delete cat", err);
-      toast.error(err?.response?.data?.error || "Failed to delete cat");
+      toast.error(getErrorMessage(err, "Failed to delete cat"));
     } finally {
       setIsDeleting(false);
     }
@@ -336,20 +336,20 @@ export default function CatDetailPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Date/Time</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Temp</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Treatment</th>
-                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Given By</th>
+                        <th className="text-left py-4 px-4 text-muted-foreground font-medium">Date/Time</th>
+                        <th className="text-left py-4 px-4 text-muted-foreground font-medium">Temp</th>
+                        <th className="text-left py-4 px-4 text-muted-foreground font-medium">Treatment</th>
+                        <th className="text-left py-4 px-4 text-muted-foreground font-medium">Given By</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loadingTreatments ? (
                         [...Array(3)].map((_, i) => (
                           <tr key={i} className="border-b border-border">
-                            <td className="py-3 px-4"><Skeleton className="h-4 w-32" /></td>
-                            <td className="py-3 px-4"><Skeleton className="h-4 w-12" /></td>
-                            <td className="py-3 px-4"><Skeleton className="h-4 w-40" /></td>
-                            <td className="py-3 px-4"><Skeleton className="h-4 w-24" /></td>
+                            <td className="py-4 px-4"><Skeleton className="h-4 w-32" /></td>
+                            <td className="py-4 px-4"><Skeleton className="h-4 w-12" /></td>
+                            <td className="py-4 px-4"><Skeleton className="h-4 w-40" /></td>
+                            <td className="py-4 px-4"><Skeleton className="h-4 w-24" /></td>
                           </tr>
                         ))
                       ) : treatments.length === 0 ? (
@@ -361,10 +361,10 @@ export default function CatDetailPage() {
                       ) : (
                         treatments.map((treatment) => (
                           <tr key={treatment.id} className="border-b border-border">
-                            <td className="py-3 px-4 text-foreground text-sm">{treatment.date}</td>
-                            <td className="py-3 px-4 text-foreground text-sm">{treatment.temp}</td>
-                            <td className="py-3 px-4 text-foreground text-sm">{treatment.treatment}</td>
-                            <td className="py-3 px-4 text-foreground text-sm">{treatment.givenBy}</td>
+                            <td className="py-4 px-4 text-foreground text-sm">{treatment.date}</td>
+                            <td className="py-4 px-4 text-foreground text-sm">{treatment.temp}</td>
+                            <td className="py-4 px-4 text-foreground text-sm">{treatment.treatment}</td>
+                            <td className="py-4 px-4 text-foreground text-sm">{treatment.givenBy}</td>
                           </tr>
                         ))
                       )}

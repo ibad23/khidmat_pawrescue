@@ -9,14 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import axios from "axios";
-import { formatPhoneInput, isValidPhone } from "@/lib/utils";
-
-interface External {
-  external_id: number;
-  name: string;
-  contact_num: string;
-  address: string | null;
-}
+import { formatPhoneInput, isValidPhone, getErrorMessage } from "@/lib/utils";
+import { External } from "@/lib/types";
 
 interface AddRevenueDialogProps {
   open: boolean;
@@ -119,8 +113,8 @@ export const AddRevenueDialog = ({ open, onOpenChange, onAdd }: AddRevenueDialog
       onAdd?.();
       toast.success("Revenue added successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to add revenue");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to add revenue"));
     } finally {
       setIsSubmitting(false);
     }

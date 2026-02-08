@@ -8,6 +8,7 @@ import { Minus, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 import type { Ward } from "@/lib/types";
 
 interface EditWardDialogProps {
@@ -47,8 +48,12 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
     e.preventDefault();
     if (isSubmitting || !ward) return;
 
-    if (!wardName.trim() || !cageCode.trim()) {
-      toast.error("Ward name and cage code are required");
+    if (!wardName.trim()) {
+      toast.error("Please enter a Ward Name");
+      return;
+    }
+    if (!cageCode.trim()) {
+      toast.error("Please enter a Ward Cage Code");
       return;
     }
 
@@ -77,9 +82,9 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
       onEdit?.(updated);
       toast.success("Ward details updated successfully");
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || err?.message || "Failed to update ward");
+      toast.error(getErrorMessage(err, "Failed to update ward"));
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +92,7 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-2xl">
+      <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Edit Ward Details</DialogTitle>
         </DialogHeader>
@@ -100,7 +105,6 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
               placeholder="Enter Ward Name"
               className="bg-muted border-border"
               required
-              disabled={isSubmitting}
             />
           </div>
 
@@ -112,7 +116,6 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
               placeholder="Enter Code for Cage e.g GW"
               className="bg-muted border-border"
               required
-              disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">
               This code will be used as prefix for cage IDs (e.g., GW-C01)
@@ -121,40 +124,22 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
 
           <div className="space-y-2">
             <Label>Number of Cages</Label>
-            <div className="flex items-center gap-3 bg-muted rounded-lg p-3">
+            <div className="flex items-center gap-4 bg-muted rounded-lg p-3">
               <Button
                 type="button"
                 size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="bg-primary hover:bg-primary/90 h-10 w-10"
                 onClick={handleDecrease}
-                disabled={isSubmitting || cageCount <= minCages}
+                disabled={cageCount <= minCages}
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <Input
-                type="number"
-                min={minCages}
-                value={cageCount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || 0;
-                  if (val < minCages) {
-                    toast.error(`Cannot reduce below ${minCages} cages. ${minCages} cage(s) are occupied.`);
-                    setCageCount(minCages);
-                  } else {
-                    setCageCount(val);
-                  }
-                }}
-                className="text-center text-2xl font-semibold bg-background border-border h-12 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                disabled={isSubmitting}
-              />
+              <span className="text-xl font-medium flex-1 text-center">{cageCount}</span>
               <Button
                 type="button"
                 size="icon"
-                variant="outline"
-                className="h-10 w-10 rounded-full shrink-0"
+                className="bg-primary hover:bg-primary/90 h-10 w-10"
                 onClick={() => setCageCount(cageCount + 1)}
-                disabled={isSubmitting}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -166,7 +151,7 @@ export const EditWardDialog = ({ open, onOpenChange, ward, onEdit, currentUserEm
             )}
           </div>
 
-          <div className="flex gap-4 justify-end pt-4">
+          <div className="flex gap-4 justify-end">
             <Button
               type="button"
               variant="ghost"

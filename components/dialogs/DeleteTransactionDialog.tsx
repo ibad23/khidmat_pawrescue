@@ -2,7 +2,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface DeleteTransactionDialogProps {
   open: boolean;
@@ -13,7 +12,6 @@ interface DeleteTransactionDialogProps {
 export const DeleteTransactionDialog = ({ open, onOpenChange, onConfirm }: DeleteTransactionDialogProps) => {
   const handleConfirm = () => {
     onConfirm?.();
-    toast.success("Transaction deleted successfully");
     onOpenChange(false);
   };
 

@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Filter, RotateCcw, MoreVertical, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, RotateCcw, MoreVertical, Download } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -34,6 +34,7 @@ import axios from "axios";
 import { Donation, Revenue, Transaction } from "@/lib/types";
 import { formatDate, formatPhoneDisplay } from "@/lib/utils";
 import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/PaginationControls";
 import usePermissions from "@/hooks/usePermissions";
 import useAuth from "@/hooks/useAuth";
 
@@ -176,6 +177,7 @@ const FinancesPage = () => {
     if (!deleteDonation) return;
     try {
       await axios.delete("/api/donations/delete", { data: { donation_id: deleteDonation.donation_id, currentUserEmail: user?.email } });
+      toast.success("Donation deleted successfully");
       loadDonations();
     } catch { toast.error("Failed to delete donation"); }
   };
@@ -184,6 +186,7 @@ const FinancesPage = () => {
     if (!deleteRevenue) return;
     try {
       await axios.delete("/api/revenue/delete", { data: { revenue_id: deleteRevenue.revenue_id, currentUserEmail: user?.email } });
+      toast.success("Revenue deleted successfully");
       loadRevenue();
     } catch { toast.error("Failed to delete revenue"); }
   };
@@ -192,6 +195,7 @@ const FinancesPage = () => {
     if (!deleteTransaction) return;
     try {
       await axios.delete("/api/transactions/delete", { data: { transaction_id: deleteTransaction.transaction_id, currentUserEmail: user?.email } });
+      toast.success("Transaction deleted successfully");
       loadTransactions();
     } catch { toast.error("Failed to delete transaction"); }
   };
@@ -265,8 +269,8 @@ const FinancesPage = () => {
             <Card className="bg-card border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Filter className="w-5 h-5" /></Button>
-                  <Button variant="outline" className="gap-2">Filter By</Button>
+                  <Filter className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Filter By</span>
                   <Select value={donationFilters.date} onValueChange={(v) => setDonationFilters({...donationFilters, date: v})}>
                     <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
                     <SelectContent>
@@ -333,29 +337,17 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
-            {!loadingDonations && donationsPagination.totalPages > 1 && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {donationsPagination.startIndex} to {donationsPagination.endIndex} of {filteredDonations.length} donations
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" onClick={() => donationsPagination.goToPage(donationsPagination.currentPage - 1)} disabled={donationsPagination.currentPage === 1} className="h-8 w-8">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {donationsPagination.getPageNumbers().map((page, index) => (
-                    typeof page === "number" ? (
-                      <Button key={index} variant={donationsPagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => donationsPagination.goToPage(page)} className={`h-8 w-8 ${donationsPagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
-                        {page}
-                      </Button>
-                    ) : (
-                      <span key={index} className="px-2 text-muted-foreground">...</span>
-                    )
-                  ))}
-                  <Button variant="outline" size="icon" onClick={() => donationsPagination.goToPage(donationsPagination.currentPage + 1)} disabled={donationsPagination.currentPage === donationsPagination.totalPages} className="h-8 w-8">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+            {!loadingDonations && (
+              <PaginationControls
+                currentPage={donationsPagination.currentPage}
+                totalPages={donationsPagination.totalPages}
+                startIndex={donationsPagination.startIndex}
+                endIndex={donationsPagination.endIndex}
+                totalItems={filteredDonations.length}
+                itemLabel="donations"
+                goToPage={donationsPagination.goToPage}
+                getPageNumbers={donationsPagination.getPageNumbers}
+              />
             )}
           </TabsContent>
 
@@ -364,8 +356,8 @@ const FinancesPage = () => {
             <Card className="bg-card border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Filter className="w-5 h-5" /></Button>
-                  <Button variant="outline" className="gap-2">Filter By</Button>
+                  <Filter className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Filter By</span>
                   <Select value={revenueFilters.date} onValueChange={(v) => setRevenueFilters({...revenueFilters, date: v})}>
                     <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
                     <SelectContent>
@@ -434,29 +426,17 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
-            {!loadingRevenue && revenuePagination.totalPages > 1 && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {revenuePagination.startIndex} to {revenuePagination.endIndex} of {filteredRevenue.length} revenue entries
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" onClick={() => revenuePagination.goToPage(revenuePagination.currentPage - 1)} disabled={revenuePagination.currentPage === 1} className="h-8 w-8">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {revenuePagination.getPageNumbers().map((page, index) => (
-                    typeof page === "number" ? (
-                      <Button key={index} variant={revenuePagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => revenuePagination.goToPage(page)} className={`h-8 w-8 ${revenuePagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
-                        {page}
-                      </Button>
-                    ) : (
-                      <span key={index} className="px-2 text-muted-foreground">...</span>
-                    )
-                  ))}
-                  <Button variant="outline" size="icon" onClick={() => revenuePagination.goToPage(revenuePagination.currentPage + 1)} disabled={revenuePagination.currentPage === revenuePagination.totalPages} className="h-8 w-8">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+            {!loadingRevenue && (
+              <PaginationControls
+                currentPage={revenuePagination.currentPage}
+                totalPages={revenuePagination.totalPages}
+                startIndex={revenuePagination.startIndex}
+                endIndex={revenuePagination.endIndex}
+                totalItems={filteredRevenue.length}
+                itemLabel="revenue entries"
+                goToPage={revenuePagination.goToPage}
+                getPageNumbers={revenuePagination.getPageNumbers}
+              />
             )}
           </TabsContent>
 
@@ -465,8 +445,8 @@ const FinancesPage = () => {
             <Card className="bg-card border-border p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground"><Filter className="w-5 h-5" /></Button>
-                  <Button variant="outline" className="gap-2">Filter By</Button>
+                  <Filter className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Filter By</span>
                   <Select value={transactionFilters.date} onValueChange={(v) => setTransactionFilters({...transactionFilters, date: v})}>
                     <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
                     <SelectContent>
@@ -533,29 +513,17 @@ const FinancesPage = () => {
                 </tbody>
               </table>
             </div>
-            {!loadingTransactions && transactionsPagination.totalPages > 1 && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {transactionsPagination.startIndex} to {transactionsPagination.endIndex} of {filteredTransactions.length} transactions
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" onClick={() => transactionsPagination.goToPage(transactionsPagination.currentPage - 1)} disabled={transactionsPagination.currentPage === 1} className="h-8 w-8">
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  {transactionsPagination.getPageNumbers().map((page, index) => (
-                    typeof page === "number" ? (
-                      <Button key={index} variant={transactionsPagination.currentPage === page ? "default" : "outline"} size="sm" onClick={() => transactionsPagination.goToPage(page)} className={`h-8 w-8 ${transactionsPagination.currentPage === page ? "bg-primary text-primary-foreground" : ""}`}>
-                        {page}
-                      </Button>
-                    ) : (
-                      <span key={index} className="px-2 text-muted-foreground">...</span>
-                    )
-                  ))}
-                  <Button variant="outline" size="icon" onClick={() => transactionsPagination.goToPage(transactionsPagination.currentPage + 1)} disabled={transactionsPagination.currentPage === transactionsPagination.totalPages} className="h-8 w-8">
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+            {!loadingTransactions && (
+              <PaginationControls
+                currentPage={transactionsPagination.currentPage}
+                totalPages={transactionsPagination.totalPages}
+                startIndex={transactionsPagination.startIndex}
+                endIndex={transactionsPagination.endIndex}
+                totalItems={filteredTransactions.length}
+                itemLabel="transactions"
+                goToPage={transactionsPagination.goToPage}
+                getPageNumbers={transactionsPagination.getPageNumbers}
+              />
             )}
           </TabsContent>
         </Tabs>

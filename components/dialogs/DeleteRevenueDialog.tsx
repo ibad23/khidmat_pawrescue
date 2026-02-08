@@ -2,7 +2,6 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 interface DeleteRevenueDialogProps {
   open: boolean;
@@ -13,7 +12,6 @@ interface DeleteRevenueDialogProps {
 export const DeleteRevenueDialog = ({ open, onOpenChange, onConfirm }: DeleteRevenueDialogProps) => {
   const handleConfirm = () => {
     onConfirm?.();
-    toast.success("Revenue deleted successfully");
     onOpenChange(false);
   };
 

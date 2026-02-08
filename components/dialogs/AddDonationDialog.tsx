@@ -8,14 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import axios from "axios";
-import { formatPhoneInput, isValidPhone } from "@/lib/utils";
-
-interface External {
-  external_id: number;
-  name: string;
-  contact_num: string;
-  address: string | null;
-}
+import { formatPhoneInput, isValidPhone, getErrorMessage } from "@/lib/utils";
+import { External } from "@/lib/types";
 
 interface AddDonationDialogProps {
   open: boolean;
@@ -116,8 +110,8 @@ export const AddDonationDialog = ({ open, onOpenChange, onAdd }: AddDonationDial
       onAdd?.();
       toast.success("Donation added successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to add donation");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to add donation"));
     } finally {
       setIsSubmitting(false);
     }

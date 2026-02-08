@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import useAuth from "@/hooks/useAuth";
 import usePermissions from "@/hooks/usePermissions";
+import { getInitials } from "@/lib/utils";
 
 export default function TeamPage() {
   const { user } = useAuth();
@@ -96,12 +97,6 @@ export default function TeamPage() {
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-    return (parts[0]?.[0] ?? "").toUpperCase();
   };
 
   return (
@@ -190,16 +185,9 @@ export default function TeamPage() {
         </div>
 
         {!loading && teamMembers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No team members found.</p>
-            <Button
-              onClick={() => setShowAddDialog(true)}
-              variant="link"
-              className="mt-2"
-            >
-              Add your first team member
-            </Button>
-          </div>
+          <Card className="p-8 text-center text-muted-foreground">
+            No team members found.
+          </Card>
         )}
       </div>
 

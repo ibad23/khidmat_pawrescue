@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import axios from "axios";
-import { formatCatId, formatForDatetimeLocal } from "@/lib/utils";
+import { formatCatId, formatForDatetimeLocal, getErrorMessage } from "@/lib/utils";
 
 interface EditTreatmentDialogProps {
   open: boolean;
@@ -160,8 +160,8 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
       onEdit?.(mapped);
       toast.success('Treatment updated successfully');
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || err?.message || 'An error occurred while updating treatment');
+    } catch (err) {
+      toast.error(getErrorMessage(err, "An error occurred while updating treatment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -173,7 +173,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">Edit Treatment</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             {/* Cat ID Search */}
             <div className="space-y-2 relative">
@@ -294,7 +294,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
             />
           </div>
 
-          <div className="flex gap-4 justify-end pt-2">
+          <div className="flex gap-4 justify-end">
             <Button type="button" variant="ghost" className="text-primary" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

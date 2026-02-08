@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
+import { getErrorMessage } from "@/lib/utils";
 import { Transaction } from "@/lib/types";
 
 interface EditTransactionDialogProps {
@@ -62,8 +63,8 @@ export const EditTransactionDialog = ({ open, onOpenChange, transaction, onEdit,
       onEdit?.();
       toast.success("Transaction updated successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to update transaction");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to update transaction"));
     } finally {
       setIsSubmitting(false);
     }

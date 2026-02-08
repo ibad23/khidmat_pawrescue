@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { Donation } from "@/lib/types";
-import { formatPhoneInput, isValidPhone } from "@/lib/utils";
+import { formatPhoneInput, isValidPhone, getErrorMessage } from "@/lib/utils";
 
 interface EditDonationDialogProps {
   open: boolean;
@@ -66,8 +66,8 @@ export const EditDonationDialog = ({ open, onOpenChange, donation, onEdit, curre
       onEdit?.();
       toast.success("Donation updated successfully");
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to update donation");
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Failed to update donation"));
     } finally {
       setIsSubmitting(false);
     }
