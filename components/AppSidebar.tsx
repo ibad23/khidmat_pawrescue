@@ -58,7 +58,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent className="bg-sidebar">
         {/* Logo Header - matches h-16 of main header */}
-        <div className="h-16 flex items-center justify-center border-b border-border px-2">
+        <div 
+          className={cn(
+            "h-16 flex items-center border-b border-border transition-all duration-200",
+            collapsed ? "justify-center px-2" : "justify-start"
+          )}
+          style={!collapsed ? { paddingLeft: '27px' } : {}}
+        >
           <Logo className={cn(
             "transition-all duration-200 object-contain",
             collapsed ? "w-6 h-6" : "h-8 w-auto"
