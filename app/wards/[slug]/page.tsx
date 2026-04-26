@@ -262,7 +262,7 @@ export default function WardDetailPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <button
               onClick={() => router.push("/wards")}
@@ -279,7 +279,7 @@ export default function WardDetailPage() {
           {canEdit && (
             <Button
               onClick={() => setShowEditDialog(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
             >
               Edit Ward Details
             </Button>
@@ -288,29 +288,32 @@ export default function WardDetailPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Filter className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-4">
+              <Filter className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Filter By</span>
+            </div>
 
-            <span className="text-sm text-muted-foreground">Filter By</span>
+            <div className="flex flex-1 items-center gap-4 min-w-[240px] flex-wrap">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="occupied">Occupied</SelectItem>
+                  <SelectItem value="vacant">Vacant</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="occupied">Occupied</SelectItem>
-                <SelectItem value="vacant">Vacant</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={handleResetFilter}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset Filter
-            </Button>
+              <Button
+                variant="outline"
+                className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors w-full sm:w-auto"
+                onClick={handleResetFilter}
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset Filter
+              </Button>
+            </div>
           </div>
         </Card>
 

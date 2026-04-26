@@ -40,11 +40,11 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2 w-full sm:w-auto justify-between sm:justify-center">
                 {dateFilter}
                 <ChevronDown className="w-4 h-4" />
               </Button>
@@ -250,8 +250,8 @@ const DashboardPage = () => {
                   <CardTitle className="text-foreground">Top Owners</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-center">
-                    <table className="w-full">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[300px]">
                       <thead>
                         <tr className="border-b border-border">
                           <th className="text-sm text-muted-foreground font-normal py-2 text-left">Name</th>

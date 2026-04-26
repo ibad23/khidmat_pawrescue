@@ -106,11 +106,11 @@ export default function WardsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-foreground">Wards</h1>
           <Button
             onClick={() => setShowAddDialog(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
           >
             + Add New Ward
           </Button>
@@ -118,32 +118,35 @@ export default function WardsPage() {
 
         <Card className="bg-card border-border p-4">
           <div className="flex items-center gap-4 flex-wrap">
-            <Filter className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-4">
+              <Filter className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Filter By</span>
+            </div>
 
-            <span className="text-sm text-muted-foreground">Filter By</span>
+            <div className="flex flex-1 items-center gap-4 min-w-[240px] flex-wrap">
+              <Select value={wardFilter} onValueChange={setWardFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Select Ward" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Wards</SelectItem>
+                  {wards.map((ward) => (
+                    <SelectItem key={ward.ward_id} value={ward.name}>
+                      {ward.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={wardFilter} onValueChange={setWardFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Ward" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Wards</SelectItem>
-                {wards.map((ward) => (
-                  <SelectItem key={ward.ward_id} value={ward.name}>
-                    {ward.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={handleResetFilter}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset Filter
-            </Button>
+              <Button
+                variant="outline"
+                className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors w-full sm:w-auto"
+                onClick={handleResetFilter}
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset Filter
+              </Button>
+            </div>
           </div>
         </Card>
 
@@ -151,10 +154,10 @@ export default function WardsPage() {
           {loading ? (
             [...Array(4)].map((_, i) => (
               <Card key={i} className="bg-card border-border p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 flex-1">
                     <Skeleton className="h-6 w-40" />
-                    <div className="flex items-center gap-8">
+                    <div className="flex flex-wrap items-center gap-4 lg:gap-8">
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-4 w-28" />
                       <Skeleton className="h-4 w-24" />
@@ -175,40 +178,42 @@ export default function WardsPage() {
                 className="bg-card border-border p-6 cursor-pointer hover:bg-card/80 transition-colors"
                 onClick={() => router.push(`/wards/${ward.ward_id}`)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-8">
-                    <h3 className="text-xl font-semibold text-foreground min-w-[200px]">{ward.name}</h3>
-                    <div className="flex items-center gap-8 text-muted-foreground">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 flex-1">
+                    <h3 className="text-xl font-semibold text-foreground break-words">{ward.name}</h3>
+                    <div className="flex flex-wrap items-center gap-x-8 gap-y-2 text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">Code:</span>
+                        <span className="font-medium whitespace-nowrap">Code:</span>
                         <span className="text-muted-foreground">{ward.code}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">Total Cages:</span>
+                        <span className="font-medium whitespace-nowrap">Total Cages:</span>
                         <span className="text-muted-foreground">{ward.totalCages}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">Free Cages:</span>
+                        <span className="font-medium whitespace-nowrap">Free Cages:</span>
                         <span className="text-muted-foreground">{ward.freeCages}</span>
                       </div>
                     </div>
                   </div>
                   {(canEdit || canDelete) && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-5 h-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {canEdit && <DropdownMenuItem onClick={(e: React.MouseEvent<HTMLDivElement>) => handleEdit(e, ward)}>Edit</DropdownMenuItem>}
-                        {canDelete && (
-                          <DropdownMenuItem className="text-destructive" onClick={(e: React.MouseEvent<HTMLDivElement>) => handleDelete(e, ward)}>
-                            Delete
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="shrink-0">
+                            <MoreVertical className="w-5 h-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {canEdit && <DropdownMenuItem onClick={(e: React.MouseEvent<HTMLDivElement>) => handleEdit(e, ward)}>Edit</DropdownMenuItem>}
+                          {canDelete && (
+                            <DropdownMenuItem className="text-destructive" onClick={(e: React.MouseEvent<HTMLDivElement>) => handleDelete(e, ward)}>
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
               </Card>

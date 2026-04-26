@@ -266,36 +266,40 @@ const FinancesPage = () => {
 
           {/* DONATIONS TAB */}
           <TabsContent value="donations" className="space-y-4">
-            <Card className="bg-card border-border p-4">
-              <div className="flex items-center justify-between">
+        <Card className="bg-card border-border p-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Filter className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Filter By</span>
-                  <Select value={donationFilters.date} onValueChange={(v) => setDonationFilters({...donationFilters, date: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={donationFilters.mode} onValueChange={(v) => setDonationFilters({...donationFilters, mode: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Modes</SelectItem>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setDonationFilters({ date: "", mode: "" })}>
-                    <RotateCcw className="w-4 h-4" />Reset Filter
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <Filter className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Filter By</span>
+                  </div>
+                  <div className="flex flex-1 items-center gap-4 min-w-[240px] flex-wrap">
+                    <Select value={donationFilters.date} onValueChange={(v) => setDonationFilters({...donationFilters, date: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">This Week</SelectItem>
+                        <SelectItem value="month">This Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={donationFilters.mode} onValueChange={(v) => setDonationFilters({...donationFilters, mode: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Modes</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="Online">Online</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors w-full sm:w-auto" onClick={() => setDonationFilters({ date: "", mode: "" })}>
+                      <RotateCcw className="w-4 h-4" />Reset Filter
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => exportToCSV(filteredDonations, "donations")}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => exportToCSV(filteredDonations, "donations")}>
                     <Download className="w-4 h-4" />Export CSV
                   </Button>
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setShowAddDonation(true)}>+ Add Donation</Button>
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" onClick={() => setShowAddDonation(true)}>+ Add Donation</Button>
                 </div>
               </div>
             </Card>
@@ -354,35 +358,39 @@ const FinancesPage = () => {
           {/* REVENUE TAB */}
           <TabsContent value="revenue" className="space-y-4">
             <Card className="bg-card border-border p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Filter className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Filter By</span>
-                  <Select value={revenueFilters.date} onValueChange={(v) => setRevenueFilters({...revenueFilters, date: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={revenueFilters.mode} onValueChange={(v) => setRevenueFilters({...revenueFilters, mode: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Modes</SelectItem>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setRevenueFilters({ date: "", mode: "" })}>
-                    <RotateCcw className="w-4 h-4" />Reset Filter
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <Filter className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Filter By</span>
+                  </div>
+                  <div className="flex flex-1 items-center gap-4 min-w-[240px] flex-wrap">
+                    <Select value={revenueFilters.date} onValueChange={(v) => setRevenueFilters({...revenueFilters, date: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">This Week</SelectItem>
+                        <SelectItem value="month">This Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={revenueFilters.mode} onValueChange={(v) => setRevenueFilters({...revenueFilters, mode: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Modes</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="Online">Online</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors w-full sm:w-auto" onClick={() => setRevenueFilters({ date: "", mode: "" })}>
+                      <RotateCcw className="w-4 h-4" />Reset Filter
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => exportToCSV(filteredRevenue, "revenue")}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => exportToCSV(filteredRevenue, "revenue")}>
                     <Download className="w-4 h-4" />Export CSV
                   </Button>
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setShowAddRevenue(true)}>+ Add Revenue</Button>
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" onClick={() => setShowAddRevenue(true)}>+ Add Revenue</Button>
                 </div>
               </div>
             </Card>
@@ -443,35 +451,39 @@ const FinancesPage = () => {
           {/* TRANSACTIONS TAB */}
           <TabsContent value="transactions" className="space-y-4">
             <Card className="bg-card border-border p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <Filter className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Filter By</span>
-                  <Select value={transactionFilters.date} onValueChange={(v) => setTransactionFilters({...transactionFilters, date: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={transactionFilters.mode} onValueChange={(v) => setTransactionFilters({...transactionFilters, mode: v})}>
-                    <SelectTrigger className="w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Modes</SelectItem>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setTransactionFilters({ date: "", mode: "" })}>
-                    <RotateCcw className="w-4 h-4" />Reset Filter
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <Filter className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Filter By</span>
+                  </div>
+                  <div className="flex flex-1 items-center gap-4 min-w-[240px] flex-wrap">
+                    <Select value={transactionFilters.date} onValueChange={(v) => setTransactionFilters({...transactionFilters, date: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Date" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="week">This Week</SelectItem>
+                        <SelectItem value="month">This Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={transactionFilters.mode} onValueChange={(v) => setTransactionFilters({...transactionFilters, mode: v})}>
+                      <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Mode" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Modes</SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="Online">Online</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" className="gap-2 border-primary text-primary bg-card hover:bg-primary hover:text-primary-foreground transition-colors w-full sm:w-auto" onClick={() => setTransactionFilters({ date: "", mode: "" })}>
+                      <RotateCcw className="w-4 h-4" />Reset Filter
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2" onClick={() => exportToCSV(filteredTransactions, "transactions")}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={() => exportToCSV(filteredTransactions, "transactions")}>
                     <Download className="w-4 h-4" />Export CSV
                   </Button>
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setShowAddTransaction(true)}>+ Add Transaction</Button>
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto" onClick={() => setShowAddTransaction(true)}>+ Add Transaction</Button>
                 </div>
               </div>
             </Card>
