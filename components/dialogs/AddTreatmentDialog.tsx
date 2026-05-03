@@ -9,7 +9,7 @@ import { Minus, Plus } from "lucide-react";
 import axios from "axios";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { formatCatId, formatForDatetimeLocal, getErrorMessage } from "@/lib/utils";
+import { formatCatId, formatForDatetimeLocal, getErrorMessage, formatCageNo } from "@/lib/utils";
 import useAuth from "@/hooks/useAuth";
 
 interface AddTreatmentDialogProps {
@@ -222,7 +222,7 @@ export const AddTreatmentDialog = ({ open, onOpenChange, onAdd, initialCatId }: 
               <span className="text-muted-foreground">Selected: </span>
               <span className="font-medium">{formatCatId(selectedCat.cat_id)} - {selectedCat.cat_name}</span>
               {selectedCat.cage?.cage_no && (
-                <span className="text-muted-foreground"> (Cage {selectedCat.cage.cage_no})</span>
+                <span className="text-muted-foreground"> (Cage {formatCageNo(selectedCat.cage.cage_no, selectedCat.cage.ward?.code)})</span>
               )}
             </div>
           )}

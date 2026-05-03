@@ -27,11 +27,29 @@ export async function POST(req: Request) {
       treatment: treatment || null,
     };
 
+    // Check if cat is expired
+    const { data: catData, error: catError } = await client
+      .from("cats")
+      .select("status")
+      .eq("cat_id", payload.cat_id)
+      .single();
+
+    if (catError) {
+      return NextResponse.json({ error: "Cat not found" }, { status: 404 });
+    }
+
+    if (catData.status.toLowerCase().includes("expired")) {
+      return NextResponse.json(
+        { error: "Cannot add treatment for an expired cat" },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await client
       .from("treatment")
       .insert(payload)
       .select(
-        `treatment_id,cat_id,user_id,date_time,temperature,treatment,cats(cat_id,cat_name,cage_id,cage(cage_no)),users(user_id,user_name)`
+        `treatment_id,cat_id,user_id,date_time,temperature,treatment,cats(cat_id,cat_name,cage_id,cage(cage_no,ward(code))),users(user_id,user_name)`
       )
       .single();
 

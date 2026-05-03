@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { InternalRole, TeamMember } from "@/lib/types";
+import useAuth from "@/hooks/useAuth";
 
 interface AddTeamMemberDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface AddTeamMemberDialogProps {
 }
 
 export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMemberDialogProps) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -75,6 +77,7 @@ export const AddTeamMemberDialog = ({ open, onOpenChange, onAdd }: AddTeamMember
         email: formData.email,
         roleId: Number(formData.roleId),
         password: formData.password,
+        currentUserEmail: user?.email,
       };
 
       const res = await axios.post("/api/team/create", payload);

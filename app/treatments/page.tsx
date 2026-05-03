@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCatId, formatDateTime } from "@/lib/utils";
+import { formatCatId, formatDateTime, formatCageNo } from "@/lib/utils";
 import { toast } from "sonner";
 import { Treatment } from "@/lib/types";
 import { usePagination } from "@/hooks/usePagination";
@@ -52,7 +52,9 @@ export default function TreatmentsPage() {
         catId: r.cat_id ? formatCatId(r.cat_id) : "",
         catIdNum: r.cat_id,
         catName: r.cats?.cat_name || "",
-        cageNo: r.cats?.cage?.cage_no || r.cats?.cage_no || "",
+        cageNo: r.cats?.cage?.cage_no 
+          ? formatCageNo(r.cats.cage.cage_no, r.cats.cage.ward?.code) 
+          : (r.cats?.cage_no ? formatCageNo(Number(r.cats.cage_no)) : "-"),
         temp: r.temperature || "",
         treatment: r.treatment || "",
         time: r.date_time ? formatDateTime(r.date_time) : "",

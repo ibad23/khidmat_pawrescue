@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 		let query = client
 			.from("treatment")
 			.select(
-				`treatment_id,cat_id,user_id,date_time,temperature,treatment,cats(cat_id,cat_name,cage_id,cage(cage_no)),users(user_id,user_name)`,
+				`treatment_id,cat_id,user_id,date_time,temperature,treatment,cats(cat_id,cat_name,cage_id,cage(cage_no,ward(code))),users(user_id,user_name)`,
 				{ count: "exact" }
 			);
 

@@ -27,7 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { formatCatId, formatCageNo, mapStatusToColor, formatDate, formatPhoneDisplay, getErrorMessage } from "@/lib/utils";
-import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, Cat } from "@/lib/types";
+import { getStatusStyle, getStatusDotStyle, Cat } from "@/lib/types";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/PaginationControls";
@@ -386,7 +386,10 @@ export default function CatsPage() {
                             className="inline-flex items-center gap-1 focus:outline-none"
                             disabled={updatingStatus === cat.cat_id}
                           >
-                            <Badge className={`${STATUS_COLORS[cat.color]} ring-2 ${STATUS_RING_COLORS[cat.color]} ${updatingStatus === cat.cat_id ? "opacity-50" : ""}`}>
+                            <Badge 
+                              className={updatingStatus === cat.cat_id ? "opacity-50" : ""}
+                              style={getStatusStyle(cat.color)}
+                            >
                               {cat.status}
                               <ChevronDown className="w-3 h-3 ml-1" />
                             </Badge>
@@ -401,7 +404,10 @@ export default function CatsPage() {
                                 onClick={() => handleStatusChange(cat, s)}
                                 className={s === cat.status ? "bg-accent" : ""}
                               >
-                                <span className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[itemColor]} mr-2`} />
+                                <span 
+                                  className="w-2 h-2 rounded-full mr-2" 
+                                  style={getStatusDotStyle(itemColor)}
+                                />
                                 {s}
                               </DropdownMenuItem>
                             );

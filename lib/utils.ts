@@ -112,29 +112,29 @@ export function mapStatusToColor(status?: string): StatusColor {
   if (!status) return "purple";
   const s = status.toLowerCase();
 
-  // Danger/Red - Critical or expired
+  // Red - Expired
   if (s.includes("expired") || s.includes("critical") || s.includes("deceased") || s.includes("dead")) {
     return "danger";
   }
 
-  // Info/Blue - Under treatment or recovering
-  if (s.includes("under treatment") || s.includes("treatment") || s.includes("recovering")) {
-    return "info";
-  }
-
-  // Success/Green - Healthy outcomes
-  if (s.includes("healthy") || s.includes("recovered") || s.includes("move") || s.includes("stable")) {
+  // Green - Under Treatment
+  if (s.includes("under treatment") || s.includes("treatment") || s.includes("recovering") || s.includes("healthy") || s.includes("recovered") || s.includes("stable")) {
     return "success";
   }
 
-  // Warning/Orange - Adoption-related or pending
-  if (s.includes("adopt") || s.includes("available") || s.includes("pending")) {
-    return "warning";
+  // Purple - Ready to Discharge
+  if (s.includes("ready to discharge") || s.includes("ready")) {
+    return "purple";
   }
 
-  // Purple - Discharged/Foster/Released
-  if (s.includes("discharge") || s.includes("foster") || s.includes("released")) {
-    return "purple";
+  // Blue - Discharged
+  if (s.includes("discharged") || s.includes("discharge") || s.includes("foster") || s.includes("released")) {
+    return "info";
+  }
+
+  // Orange - Adopted
+  if (s.includes("adopted") || s.includes("adopt") || s.includes("available") || s.includes("pending")) {
+    return "warning";
   }
 
   return "purple";

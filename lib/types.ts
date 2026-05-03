@@ -122,31 +122,27 @@ export interface DashboardData {
 
 export type StatusColor = "success" | "danger" | "info" | "warning" | "purple";
 
-export const STATUS_COLORS: Record<StatusColor, string> = {
-  success: "bg-status-success text-white",
-  danger: "bg-status-danger text-white",
-  info: "bg-status-info text-white",
-  warning: "bg-status-warning text-white",
-  purple: "bg-status-purple text-white",
+const STATUS_HEX: Record<StatusColor, string> = {
+  success: "#22c55e",
+  danger:  "#ef4444",
+  info:    "#3b82f6",
+  warning: "#f59e0b",
+  purple:  "#a855f7",
 };
 
-export const STATUS_DOT_COLORS: Record<StatusColor, string> = {
-  success: "bg-status-success",
-  danger: "bg-status-danger",
-  info: "bg-status-info",
-  warning: "bg-status-warning",
-  purple: "bg-status-purple",
-};
+export const getStatusStyle = (color: StatusColor): React.CSSProperties => ({
+  backgroundColor: `${STATUS_HEX[color]}1a`, // 10% opacity
+  color:           STATUS_HEX[color],
+  borderColor:     `${STATUS_HEX[color]}33`, // 20% opacity
+});
 
-export const STATUS_RING_COLORS: Record<StatusColor, string> = {
-  success: "ring-status-success ring-opacity-50",
-  danger: "ring-status-danger ring-opacity-50",
-  info: "ring-status-info ring-opacity-50",
-  warning: "ring-status-warning ring-opacity-50",
-  purple: "ring-status-purple ring-opacity-50",
-};
+export const getStatusDotStyle = (color: StatusColor): React.CSSProperties => ({
+  backgroundColor: STATUS_HEX[color],
+});
 
-
+export const getStatusRingStyle = (color: StatusColor): React.CSSProperties => ({
+  outline: `2px solid ${STATUS_HEX[color]}80`, // 50% opacity
+});
 
 // ============================================
 // Finance Types

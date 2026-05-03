@@ -20,8 +20,8 @@ const usePermissions = (): Permissions => {
   const isSurgeon = userRole === "Surgeon";
 
   return {
-    // All roles can add
-    canAdd: isAdmin || isModerator || isSurgeon,
+    // Only admin can add
+    canAdd: isAdmin,
     // Only admin can edit
     canEdit: isAdmin,
     // Only admin can delete

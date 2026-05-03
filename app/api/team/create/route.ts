@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import client from "../../client";
 import adminClient from "../../adminClient";
+import { isUserAdmin } from "@/lib/permissions";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, roleId, password } = body;
+    const { name, email, roleId, password, currentUserEmail } = body;
+
+    // Check permissions
+    if (!currentUserEmail || !(await isUserAdmin(currentUserEmail))) {
+      return NextResponse.json(
+        { error: "Unauthorized: Administrator access required" },
+        { status: 403 }
+      );
+    }
 
     // Validate required fields
     if (!name || !email || !roleId || !password) {

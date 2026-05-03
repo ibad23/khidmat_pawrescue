@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { Minus, Plus } from "lucide-react";
 import axios from "axios";
-import { formatCatId, formatForDatetimeLocal, getErrorMessage } from "@/lib/utils";
+import { formatCatId, formatForDatetimeLocal, getErrorMessage, formatCageNo } from "@/lib/utils";
 
 interface EditTreatmentDialogProps {
   open: boolean;
@@ -150,7 +150,9 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
         catIdNum: updated.cat_id,
         catId: formatCatId(updated.cat_id),
         catName: updated.cats?.cat_name || "",
-        cageNo: updated.cats?.cage?.cage_no || "",
+        cageNo: updated.cats?.cage?.cage_no 
+          ? formatCageNo(updated.cats.cage.cage_no, updated.cats.cage.ward?.code) 
+          : (updated.cats?.cage_no ? formatCageNo(Number(updated.cats.cage_no)) : "-"),
         temp: updated.temperature || `${formData.temp}°F`,
         treatment: updated.treatment || formData.treatment,
         time: updated.date_time ? new Date(updated.date_time).toLocaleString() : new Date().toLocaleString(),
@@ -244,7 +246,7 @@ export const EditTreatmentDialog = ({ open, onOpenChange, treatment, onEdit, cur
               <span className="text-muted-foreground">Selected: </span>
               <span className="font-medium">{formatCatId(selectedCat.cat_id)} - {selectedCat.cat_name}</span>
               {selectedCat.cage?.cage_no && (
-                <span className="text-muted-foreground"> (Cage {selectedCat.cage.cage_no})</span>
+                <span className="text-muted-foreground"> (Cage {formatCageNo(selectedCat.cage.cage_no, selectedCat.cage.ward?.code)})</span>
               )}
             </div>
           )}

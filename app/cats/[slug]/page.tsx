@@ -7,7 +7,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, MoreVertical, ArrowLeft, Calendar, Home, User, Clock } from "lucide-react";
+import { ChevronDown, MoreVertical, ArrowLeft, Calendar, Home, User, Clock, Download } from "lucide-react";
 import { AddTreatmentDialog } from "@/components/dialogs/AddTreatmentDialog";
 import { EditCatDialog } from "@/components/dialogs/EditCatDialog";
 import { DeleteCatDialog } from "@/components/dialogs/DeleteCatDialog";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCatId, formatCageNo, mapStatusToColor, formatPhoneDisplay, getErrorMessage } from "@/lib/utils";
-import { STATUS_COLORS, STATUS_DOT_COLORS, STATUS_RING_COLORS, StatusColor } from "@/lib/types";
+import { getStatusStyle, getStatusDotStyle, StatusColor } from "@/lib/types";
 import { toast } from "sonner";
 import usePermissions from "@/hooks/usePermissions";
 import useAuth from "@/hooks/useAuth";
@@ -186,6 +186,24 @@ export default function CatDetailPage() {
     }
   };
 
+  const exportToCSV = (data: any[], filename: string) => {
+    if (data.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    const headers = Object.keys(data[0]).join(",");
+    const rows = data.map(row => Object.values(row).map(v => `"${v}"`).join(",")).join("\n");
+    const csv = `${headers}\n${rows}`;
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Data exported successfully");
+  };
+
   const catForEdit: CatForEdit | null = cat ? {
     cat_id: cat.cat_id,
     cat_name: cat.cat_name,
@@ -218,12 +236,23 @@ export default function CatDetailPage() {
               {loadingCat ? <Skeleton className="h-9 w-32" /> : slugParam}
             </h1>
           </div>
-          <Button
-            onClick={() => setShowAddTreatmentDialog(true)}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            + Add Treatment
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 w-full sm:w-auto"
+              onClick={() => exportToCSV(treatments, `${slugParam}_treatments`)}
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </Button>
+            <Button
+              onClick={() => setShowAddTreatmentDialog(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
+              disabled={cat?.status?.toLowerCase().includes("expired")}
+            >
+              + Add Treatment
+            </Button>
+          </div>
         </div>
 
         <Card className="bg-card border-border">
@@ -290,7 +319,10 @@ export default function CatDetailPage() {
                         className="inline-flex items-center focus:outline-none"
                         disabled={updatingStatus}
                       >
-                        <Badge className={`${STATUS_COLORS[statusColor]} ring-2 ${STATUS_RING_COLORS[statusColor]} ${updatingStatus ? "opacity-50" : ""}`}>
+                        <Badge 
+                          className={updatingStatus ? "opacity-50" : ""}
+                          style={getStatusStyle(statusColor)}
+                        >
                           {cat?.status || "Unknown"}
                           <ChevronDown className="w-4 h-4 ml-1" />
                         </Badge>
@@ -305,7 +337,10 @@ export default function CatDetailPage() {
                             onClick={() => handleStatusChange(s)}
                             className={s === cat?.status ? "bg-accent" : ""}
                           >
-                            <span className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[itemColor]} mr-2`} />
+                            <span 
+                              className="w-2 h-2 rounded-full mr-2" 
+                              style={getStatusDotStyle(itemColor)}
+                            />
                             {s}
                           </DropdownMenuItem>
                         );
