@@ -40,16 +40,11 @@ export async function GET(req: NextRequest) {
     });
 
     const catStatusData = [
-      { name: "Under Observation", value: statusCounts["Under observation"] || 0, color: "#ef4444" },
       { name: "Under Treatment", value: statusCounts["Under Treatment"] || 0, color: "#22c55e" },
-      { name: "Recovered", value: statusCounts["Ready to discharge"] || 0, color: "#f59e0b" },
       { name: "Expired", value: statusCounts["Expired"] || 0, color: "#ef4444" },
-      { name: "Move to HA", value: (statusCounts["Move to healthy area"] || 0) + (statusCounts["Ready to move H.A"] || 0), color: "#06b6d4" },
-      { name: "Fostered", value: statusCounts["Fostered"] || 0, color: "#a855f7" },
-      { name: "Adopted", value: statusCounts["Adopted"] || 0, color: "#f59e0b" },
       { name: "Discharged", value: statusCounts["Discharged"] || 0, color: "#3b82f6" },
-      { name: "Healthy in LP", value: statusCounts["Healthy in lower portion"] || 0, color: "#6366f1" },
-      { name: "Missing", value: statusCounts["Missing"] || 0, color: "#78716c" },
+      { name: "Adopted", value: statusCounts["Adopted"] || 0, color: "#f59e0b" },
+      { name: "Ready to discharge", value: statusCounts["Ready to discharge"] || 0, color: "#a855f7" },
     ].filter(item => item.value > 0);
 
     // Get donations data by month
@@ -107,7 +102,7 @@ export async function GET(req: NextRequest) {
       .slice(0, 5);
 
     // Summary stats
-    const recovered = statusCounts["Ready to discharge"] || 0;
+    const readyToDischarge = statusCounts["Ready to discharge"] || 0;
     const expired = statusCounts["Expired"] || 0;
     const discharged = statusCounts["Discharged"] || 0;
 
@@ -115,7 +110,7 @@ export async function GET(req: NextRequest) {
       {
         stats: {
           totalCats,
-          recovered,
+          readyToDischarge,
           expired,
           discharged,
         },

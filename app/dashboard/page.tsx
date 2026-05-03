@@ -126,10 +126,10 @@ const DashboardPage = () => {
 
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-sm text-muted-foreground font-normal">Recovered</CardTitle>
+                  <CardTitle className="text-sm text-muted-foreground font-normal">Ready to discharge</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-foreground">{dashboardData.stats.recovered.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-foreground">{dashboardData.stats.readyToDischarge.toLocaleString()}</div>
                 </CardContent>
               </Card>
 

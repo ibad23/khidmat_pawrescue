@@ -87,7 +87,7 @@ export interface TeamMember {
 
 export interface DashboardStats {
   totalCats: number;
-  recovered: number;
+  readyToDischarge: number;
   expired: number;
   discharged: number;
 }
